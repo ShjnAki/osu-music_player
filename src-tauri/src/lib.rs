@@ -235,13 +235,65 @@ fn scan_osu_songs(folder_path: String) -> Result<Vec<Track>, String> {
     Ok(tracks)
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TracksCache {
+    pub folder_mtime: u64,
+    pub tracks: Vec<Track>,
+}
+
+/// Returns the max mtime (seconds since epoch) of immediate subdirectories in folder_path.
+fn folder_mtime(folder_path: &str) -> u64 {
+    std::fs::read_dir(folder_path)
+        .map(|entries| {
+            entries
+                .filter_map(|e| e.ok())
+                .filter_map(|e| e.metadata().ok())
+                .filter_map(|m| m.modified().ok())
+                .filter_map(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+                .map(|d| d.as_secs())
+                .max()
+                .unwrap_or(0)
+        })
+        .unwrap_or(0)
+}
+
+#[tauri::command]
+fn load_tracks_cache(cache_path: String, folder_path: String) -> Option<Vec<Track>> {
+    let content = std::fs::read_to_string(&cache_path).ok()?;
+    let cache: TracksCache = serde_json::from_str(&content).ok()?;
+    let current_mtime = folder_mtime(&folder_path);
+    if current_mtime == cache.folder_mtime {
+        Some(cache.tracks)
+    } else {
+        None
+    }
+}
+
+#[tauri::command]
+fn save_tracks_cache(cache_path: String, folder_path: String, tracks: Vec<Track>) -> Result<(), String> {
+    let cache = TracksCache {
+        folder_mtime: folder_mtime(&folder_path),
+        tracks,
+    };
+    let json = serde_json::to_string(&cache).map_err(|e| e.to_string())?;
+    // Ensure parent directory exists
+    if let Some(parent) = Path::new(&cache_path).parent() {
+        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+    std::fs::write(&cache_path, json).map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
-        .invoke_handler(tauri::generate_handler![scan_osu_songs])
+        .invoke_handler(tauri::generate_handler![
+            scan_osu_songs,
+            load_tracks_cache,
+            save_tracks_cache,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
