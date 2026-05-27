@@ -4,7 +4,6 @@ import type { Track, PlayerStatus, RepeatMode, Theme } from '@/types';
 
 interface PlayerState {
   tracks: Track[];
-  filteredTracks: Track[];
   searchQuery: string;
   songsFolder: string;
   isScanning: boolean;
@@ -20,7 +19,6 @@ interface PlayerState {
   showSettings: boolean;
 
   setTracks: (tracks: Track[]) => void;
-  setFilteredTracks: (tracks: Track[]) => void;
   setSearchQuery: (q: string) => void;
   setSongsFolder: (path: string) => void;
   setIsScanning: (v: boolean) => void;
@@ -38,17 +36,24 @@ interface PlayerState {
   prevTrack: () => void;
 }
 
+function filterTracks(tracks: Track[], query: string): Track[] {
+  if (!query) return tracks;
+  const q = query.toLowerCase();
+  return tracks.filter(t =>
+    t.title.toLowerCase().includes(q) || t.artist.toLowerCase().includes(q)
+  );
+}
+
 export const usePlayerStore = create<PlayerState>()(
   persist(
     (set, get) => ({
-      tracks: [], filteredTracks: [], searchQuery: '',
+      tracks: [], searchQuery: '',
       songsFolder: 'C:\\osu!\\Songs', isScanning: false,
       currentTrack: null, status: 'idle', progress: 0,
       volume: 0.8, isMuted: false, isShuffled: false, repeatMode: 'none',
       currentTheme: null, showLibrary: true, showSettings: false,
 
-      setTracks: (tracks) => set({ tracks, filteredTracks: tracks }),
-      setFilteredTracks: (ft) => set({ filteredTracks: ft }),
+      setTracks: (tracks) => set({ tracks }),
       setSearchQuery: (searchQuery) => set({ searchQuery }),
       setSongsFolder: (songsFolder) => set({ songsFolder }),
       setIsScanning: (isScanning) => set({ isScanning }),
@@ -66,29 +71,37 @@ export const usePlayerStore = create<PlayerState>()(
       setShowSettings: (showSettings) => set({ showSettings }),
 
       nextTrack: () => {
-        const { currentTrack, filteredTracks, isShuffled, repeatMode } = get();
-        if (!filteredTracks.length) return;
-        const idx = filteredTracks.findIndex((t) => t.id === currentTrack?.id);
+        const { currentTrack, tracks, searchQuery, isShuffled, repeatMode } = get();
+        const visible = filterTracks(tracks, searchQuery);
+        if (!visible.length) return;
+        const idx = visible.findIndex((t) => t.id === currentTrack?.id);
         let nextIdx = isShuffled
-          ? Math.floor(Math.random() * filteredTracks.length)
-          : idx + 1 >= filteredTracks.length
+          ? Math.floor(Math.random() * visible.length)
+          : idx + 1 >= visible.length
           ? repeatMode === 'all' ? 0 : -1
           : idx + 1;
-        if (nextIdx >= 0) set({ currentTrack: filteredTracks[nextIdx], progress: 0, status: 'loading' });
+        if (nextIdx >= 0) set({ currentTrack: visible[nextIdx], progress: 0, status: 'loading' });
       },
 
       prevTrack: () => {
-        const { currentTrack, filteredTracks, progress } = get();
-        if (!filteredTracks.length) return;
+        const { currentTrack, tracks, searchQuery, progress } = get();
+        const visible = filterTracks(tracks, searchQuery);
+        if (!visible.length) return;
         if (progress > 0.05) { set({ progress: 0, status: 'loading' }); return; }
-        const idx = filteredTracks.findIndex((t) => t.id === currentTrack?.id);
-        const prevIdx = idx > 0 ? idx - 1 : filteredTracks.length - 1;
-        set({ currentTrack: filteredTracks[prevIdx], progress: 0, status: 'loading' });
+        const idx = visible.findIndex((t) => t.id === currentTrack?.id);
+        const prevIdx = idx > 0 ? idx - 1 : visible.length - 1;
+        set({ currentTrack: visible[prevIdx], progress: 0, status: 'loading' });
       },
     }),
     {
       name: 'osu-player-storage',
-      partialize: (s) => ({ songsFolder: s.songsFolder, volume: s.volume, isShuffled: s.isShuffled, repeatMode: s.repeatMode, currentTheme: s.currentTheme }),
+      partialize: (s) => ({
+        songsFolder: s.songsFolder,
+        volume: s.volume,
+        isShuffled: s.isShuffled,
+        repeatMode: s.repeatMode,
+        currentTheme: s.currentTheme,
+      }),
     }
   )
 );

@@ -1,10 +1,10 @@
-import { useMemo, useEffect } from 'react';
+import { useMemo } from 'react';
 import { usePlayerStore } from '@/stores/playerStore';
 import type { Track } from '@/types';
 import './Library.css';
 
 export function Library() {
-  const { tracks, searchQuery, currentTrack, setSearchQuery, setCurrentTrack, setFilteredTracks } = usePlayerStore();
+  const { tracks, searchQuery, currentTrack, setSearchQuery, setCurrentTrack } = usePlayerStore();
 
   const filtered = useMemo(() => {
     const q = searchQuery.toLowerCase();
@@ -13,11 +13,6 @@ export function Library() {
       t.artist.toLowerCase().includes(q)
     ) : tracks;
   }, [tracks, searchQuery]);
-
-  // ✅ useEffect pour éviter le setState pendant le render
-  useEffect(() => {
-    setFilteredTracks(filtered);
-  }, [filtered]);
 
   const handlePlay = (track: Track) => {
     setCurrentTrack(track);

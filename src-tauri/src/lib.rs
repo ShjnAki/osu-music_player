@@ -168,7 +168,7 @@ fn scan_osu_songs(folder_path: String) -> Result<Vec<Track>, String> {
                         let raw_album = tag.album().unwrap_or("").to_string();
                         let duration = tag
                             .duration()
-                            .map(|d| d as u64)
+                            .map(|d| d as u64 / 1000) // TLEN frame stores milliseconds
                             .or_else(|| estimate_duration_from_size(path, ext));
 
                         let title = if raw_title.is_empty() || raw_title.contains('\u{FFFD}') {
@@ -235,39 +235,13 @@ fn scan_osu_songs(folder_path: String) -> Result<Vec<Track>, String> {
     Ok(tracks)
 }
 
-#[tauri::command]
-fn parse_osu_bpm(osu_file_path: String) -> Option<f32> {
-    let content = std::fs::read_to_string(&osu_file_path).ok()?;
-    for line in content.lines() {
-        if line.starts_with("BeatLength:") || line.contains(',') {
-            if let Some(beat_len_str) = line.split(',').next() {
-                if let Ok(beat_len) = beat_len_str.trim().parse::<f32>() {
-                    if beat_len > 0.0 {
-                        return Some(60_000.0 / beat_len);
-                    }
-                }
-            }
-        }
-    }
-    None
-}
-
-#[tauri::command]
-fn read_audio_file(path: String) -> Result<Vec<u8>, String> {
-    std::fs::read(&path).map_err(|e| e.to_string())
-}
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
-        .invoke_handler(tauri::generate_handler![
-            scan_osu_songs,
-            parse_osu_bpm,
-            read_audio_file,
-        ])
+        .invoke_handler(tauri::generate_handler![scan_osu_songs])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

@@ -129,4 +129,4 @@
   color: var(--text-muted);
 }
 .nav-btn:hover { color: var(--text-primary); background: rgba(255,255,255,0.1); }
-.nav-btn.active { color: var(--accent); background: rgba(255,102,170,0.1); }
+.nav-btn.active { color: var(--accent); background: var(--accent-subtle); }

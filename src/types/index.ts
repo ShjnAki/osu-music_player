@@ -24,6 +24,7 @@ export interface ThemeVariables {
   '--bg-tertiary': string;
   '--accent': string;
   '--accent-hover': string;
+  '--accent-subtle': string;
   '--text-primary': string;
   '--text-secondary': string;
   '--text-muted': string;

@@ -1,8 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTheme } from '@/hooks/useTheme';
 import { useAudio } from '@/hooks/useAudio';
 import { usePlayerStore } from '@/stores/playerStore';
 import { invoke } from '@tauri-apps/api/core';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import { PlayerBar } from '@/components/Player/PlayerBar';
 import { Library } from '@/components/Library/Library';
 import { Settings } from '@/components/Settings/Settings';
@@ -13,11 +14,13 @@ export default function App() {
   useTheme();
   const { toggle, seek } = useAudio();
   const { songsFolder, setTracks, setIsScanning, isScanning, showSettings, showLibrary } = usePlayerStore();
+  const [scanError, setScanError] = useState<string | null>(null);
 
   useEffect(() => { handleScan(); }, []);
 
   const handleScan = async () => {
     setIsScanning(true);
+    setScanError(null);
     try {
       const raw = await invoke<any[]>('scan_osu_songs', { folderPath: songsFolder });
       setTracks(raw.map(t => ({
@@ -30,10 +33,13 @@ export default function App() {
         path: t.path,
         beatmapSet: t.beatmap_set,
         coverPath: t.cover_path,
-        backgroundPath: t.background_path, // ← nouveau
+        backgroundPath: t.background_path,
       })));
-    } catch (e) { console.warn('Scan failed:', e); }
-    finally { setIsScanning(false); }
+    } catch (e) {
+      setScanError(String(e));
+    } finally {
+      setIsScanning(false);
+    }
   };
 
   return (
@@ -41,10 +47,16 @@ export default function App() {
       <div className="titlebar" data-tauri-drag-region>
         <span className="titlebar-title">osu! player</span>
         <div className="titlebar-actions">
-          <button className="titlebar-btn" onClick={() => {}}>—</button>
-          <button className="titlebar-btn" onClick={() => (window as any).__TAURI__?.window?.appWindow?.close()}>×</button>
+          <button className="titlebar-btn" onClick={() => getCurrentWindow().minimize()}>—</button>
+          <button className="titlebar-btn" onClick={() => getCurrentWindow().close()}>×</button>
         </div>
       </div>
+      {scanError && (
+        <div className="scan-error">
+          <span>⚠ {scanError}</span>
+          <button onClick={() => setScanError(null)}>×</button>
+        </div>
+      )}
       <div className="app-body">
         {showSettings ? (
           <Settings onScan={handleScan} isScanning={isScanning} />
