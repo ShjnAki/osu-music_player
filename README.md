@@ -1,21 +1,23 @@
-# osu! Player
+# 🎵 osu! Player
 
-A lightweight desktop music player for your osu! beatmap collection.
+A lightweight, themeable desktop music player for your osu! beatmap collection.
 
 Built with **Tauri 2.0** (Rust) + **React 18** + **TypeScript**.
 
 ## Features
 
-- Plays MP3 and OGG audio from your osu! Songs folder
-- Library with search (title / artist) and BPM range filter
-- Favorites (♥) and manual playlists
-- 4 built-in themes (Dark, Glass, Sakura, Minimal)
-- Shuffle & repeat modes, volume control
-- ID3 tag reading (title, artist) with folder-name fallback
-- Album art and beatmap background images
-- **Sphere mode** — circular always-on-top window with track list inside
-- Metadata cache: first scan is slow, subsequent launches load instantly
-- Frameless, draggable window
+- 🎵 Plays MP3 and OGG files from your osu! Songs folder
+- 📋 Library with search (title / artist) and BPM range filter
+- ❤️ Favorites and manual playlists
+- 🎨 4 built-in themes (Dark, Glass, Sakura, Minimal)
+- 🔀 Shuffle & repeat modes
+- 🔊 Volume control
+- 🏷️ ID3 tag reading (title, artist) with folder-name fallback
+- 🖼️ Album art and beatmap background images
+- 🔵 Sphere mode — circular always-on-top window with track list inside
+- ⚡ Metadata cache: first scan is slow, subsequent launches load instantly
+- 💾 Settings persisted between sessions
+- 🪟 Frameless, draggable window
 
 ## Prerequisites
 
@@ -68,4 +70,4 @@ Themes are defined in `src/hooks/useTheme.ts` as objects with CSS custom propert
 
 ## License
 
-MIT
+MIT — Fork it, mod it, share it! 🎮
