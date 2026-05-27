@@ -21,15 +21,16 @@ Built with **Tauri 2.0** (Rust) + **React 18** + **TypeScript**.
 
 ## Prerequisites
 
-- [Node.js 18+](https://nodejs.org/) LTS
-- [Rust stable](https://rustup.rs/)
-- [Tauri v2 prerequisites for Windows](https://v2.tauri.app/start/prerequisites/)
-  - Microsoft C++ Build Tools: `winget install Microsoft.VisualStudio.2022.BuildTools`
+- [Node.js 18+](https://nodejs.org/) LTS version
+- [Rust (stable)](https://rustup.rs/) or `winget install Rustlang.Rustup` then `rustup default stable`
+- [Tauri prerequisites for Windows](https://v2.tauri.app/start/prerequisites/)
+  - Microsoft C++ Build Tools `winget install Microsoft.VisualStudio.2022.BuildTools`
   - WebView2 (included in Windows 11, installer available for Windows 10)
 
-## Getting started
+## Getting Started
 
 ```bash
+# Install dependencies
 npm install
 
 # Development (hot-reload)
@@ -39,7 +40,7 @@ npm run tauri dev
 npm run tauri build
 ```
 
-## Project structure
+## Project Structure
 
 ```
 osu-player/
@@ -54,19 +55,31 @@ osu-player/
 │   │   └── useTheme.ts         # CSS variable theming + 4 built-in themes
 │   ├── stores/
 │   │   └── playerStore.ts      # Zustand global state (persist: folder, volume, theme, favorites, playlists)
-│   ├── types/index.ts
+│   ├── types/index.ts          # TypeScript interfaces
 │   └── styles/globals.css
 └── src-tauri/                  # Rust backend
     └── src/lib.rs              # scan_osu_songs, load_tracks_cache, save_tracks_cache, set_sphere_mode
 ```
 
-## Sphere mode
+## Sphere Mode
 
 Click **◎** in the titlebar to switch to sphere mode: a circular 360×360 window that floats always-on-top. The beatmap background fills the sphere. Click **⊡** to return to normal mode.
 
-## Themes
+## Creating a Custom Theme
 
-Themes are defined in `src/hooks/useTheme.ts` as objects with CSS custom properties. To add a theme, append an entry to the `BUILTIN_THEMES` array with the required `ThemeVariables` keys (see `src/types/index.ts`).
+Themes are defined in `src/hooks/useTheme.ts` as objects with CSS custom properties. To add a theme, append an entry to the `BUILTIN_THEMES` array:
+
+```ts
+{
+  id: "my-theme",
+  name: "My Theme",
+  variables: {
+    "--bg-primary": "#0a0a0a",
+    "--accent": "#00ff88",
+    // ...see ThemeVariables in src/types/index.ts
+  }
+}
+```
 
 ## License
 
