@@ -17,6 +17,7 @@ interface PlayerState {
   currentTheme: Theme | null;
   showLibrary: boolean;
   showSettings: boolean;
+  isSphereMode: boolean;
 
   setTracks: (tracks: Track[]) => void;
   setSearchQuery: (q: string) => void;
@@ -32,6 +33,7 @@ interface PlayerState {
   setTheme: (theme: Theme) => void;
   setShowLibrary: (v: boolean) => void;
   setShowSettings: (v: boolean) => void;
+  toggleSphereMode: () => void;
   nextTrack: () => void;
   prevTrack: () => void;
 }
@@ -51,7 +53,7 @@ export const usePlayerStore = create<PlayerState>()(
       songsFolder: 'C:\\osu!\\Songs', isScanning: false,
       currentTrack: null, status: 'idle', progress: 0,
       volume: 0.8, isMuted: false, isShuffled: false, repeatMode: 'none',
-      currentTheme: null, showLibrary: true, showSettings: false,
+      currentTheme: null, showLibrary: true, showSettings: false, isSphereMode: false,
 
       setTracks: (tracks) => set({ tracks }),
       setSearchQuery: (searchQuery) => set({ searchQuery }),
@@ -69,6 +71,7 @@ export const usePlayerStore = create<PlayerState>()(
       setTheme: (currentTheme) => set({ currentTheme }),
       setShowLibrary: (showLibrary) => set({ showLibrary }),
       setShowSettings: (showSettings) => set({ showSettings }),
+      toggleSphereMode: () => set((s) => ({ isSphereMode: !s.isSphereMode })),
 
       nextTrack: () => {
         const { currentTrack, tracks, searchQuery, isShuffled, repeatMode } = get();

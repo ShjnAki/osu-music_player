@@ -283,6 +283,22 @@ fn save_tracks_cache(cache_path: String, folder_path: String, tracks: Vec<Track>
     std::fs::write(&cache_path, json).map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+async fn set_sphere_mode(app: tauri::AppHandle, enabled: bool) -> Result<(), String> {
+    use tauri::Manager;
+    let win = app.get_webview_window("main").ok_or("window not found")?;
+    if enabled {
+        win.set_size(tauri::Size::Physical(tauri::PhysicalSize { width: 360, height: 360 }))
+            .map_err(|e| e.to_string())?;
+        win.set_always_on_top(true).map_err(|e| e.to_string())?;
+    } else {
+        win.set_size(tauri::Size::Physical(tauri::PhysicalSize { width: 380, height: 580 }))
+            .map_err(|e| e.to_string())?;
+        win.set_always_on_top(false).map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -293,6 +309,7 @@ pub fn run() {
             scan_osu_songs,
             load_tracks_cache,
             save_tracks_cache,
+            set_sphere_mode,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

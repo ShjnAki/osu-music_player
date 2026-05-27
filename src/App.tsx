@@ -9,16 +9,25 @@ import type { Track } from '@/types';
 import { PlayerBar } from '@/components/Player/PlayerBar';
 import { Library } from '@/components/Library/Library';
 import { Settings } from '@/components/Settings/Settings';
+import { SphereView } from '@/components/SphereView/SphereView';
 import '@/styles/globals.css';
 import './App.css';
 
 export default function App() {
   useTheme();
   const { toggle, seek } = useAudio();
-  const { songsFolder, setTracks, setIsScanning, isScanning, showSettings, showLibrary } = usePlayerStore();
+  const {
+    songsFolder, setTracks, setIsScanning, isScanning,
+    showSettings, showLibrary, isSphereMode, toggleSphereMode,
+  } = usePlayerStore();
   const [scanError, setScanError] = useState<string | null>(null);
 
   useEffect(() => { loadOrScan(); }, []);
+
+  // Sync Tauri window when sphere mode changes
+  useEffect(() => {
+    invoke('set_sphere_mode', { enabled: isSphereMode }).catch(() => {});
+  }, [isSphereMode]);
 
   const mapRaw = (t: any): Track => ({
     id: t.id,
@@ -75,11 +84,25 @@ export default function App() {
     }
   };
 
+  if (isSphereMode) {
+    return (
+      <div className="app sphere-mode">
+        <SphereView onToggle={toggle} onSeek={seek} />
+        <button
+          className="sphere-exit-btn"
+          onClick={toggleSphereMode}
+          title="Exit sphere mode"
+        >⊡</button>
+      </div>
+    );
+  }
+
   return (
     <div className="app">
       <div className="titlebar" data-tauri-drag-region>
         <span className="titlebar-title">osu! player</span>
         <div className="titlebar-actions">
+          <button className="titlebar-btn" onClick={toggleSphereMode} title="Sphere mode">◎</button>
           <button className="titlebar-btn" onClick={() => getCurrentWindow().minimize()}>—</button>
           <button className="titlebar-btn" onClick={() => getCurrentWindow().close()}>×</button>
         </div>
