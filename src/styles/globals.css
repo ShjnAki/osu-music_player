@@ -1,0 +1,17 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg-primary: #0d0d12; --bg-secondary: #16161f; --bg-tertiary: #1e1e2a;
+  --accent: #ff66aa; --accent-hover: #ff88bb;
+  --text-primary: #ffffff; --text-secondary: #ccccdd; --text-muted: #666677;
+  --radius: 12px; --blur: 20px; --border: rgba(255,255,255,0.06);
+  --font-main: 'Segoe UI', system-ui, sans-serif; --bg-opacity: 0.95;
+}
+html, body, #root { width: 100%; height: 100%; overflow: hidden; font-family: var(--font-main); background: transparent; color: var(--text-primary); user-select: none; }
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+button { background: none; border: none; cursor: pointer; color: inherit; font-family: inherit; transition: all 0.15s ease; }
+input { font-family: inherit; outline: none; border: none; background: none; color: inherit; }
+.fade-in { animation: fadeIn 0.25s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes spin { to { transform: rotate(360deg); } }

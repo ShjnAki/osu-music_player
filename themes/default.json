@@ -1,0 +1,20 @@
+{
+  "id": "default",
+  "name": "osu! Dark",
+  "author": "osu-player",
+  "variables": {
+    "--bg-primary": "#0d0d12",
+    "--bg-secondary": "#16161f",
+    "--bg-tertiary": "#1e1e2a",
+    "--accent": "#ff66aa",
+    "--accent-hover": "#ff88bb",
+    "--text-primary": "#ffffff",
+    "--text-secondary": "#ccccdd",
+    "--text-muted": "#666677",
+    "--radius": "12px",
+    "--blur": "20px",
+    "--border": "rgba(255,255,255,0.06)",
+    "--font-main": "'Segoe UI', system-ui, sans-serif",
+    "--bg-opacity": "0.95"
+  }
+}

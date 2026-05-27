@@ -1,0 +1,20 @@
+{
+  "id": "minimal",
+  "name": "Minimal Light",
+  "author": "osu-player",
+  "variables": {
+    "--bg-primary": "#f5f5f7",
+    "--bg-secondary": "#ffffff",
+    "--bg-tertiary": "#ebebed",
+    "--accent": "#007aff",
+    "--accent-hover": "#0066dd",
+    "--text-primary": "#1d1d1f",
+    "--text-secondary": "#48484a",
+    "--text-muted": "#aeaeb2",
+    "--radius": "10px",
+    "--blur": "0px",
+    "--border": "rgba(0,0,0,0.08)",
+    "--font-main": "'Segoe UI', system-ui, sans-serif",
+    "--bg-opacity": "1"
+  }
+}

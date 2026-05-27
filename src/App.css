@@ -1,0 +1,43 @@
+.app { 
+    display: flex; 
+    flex-direction: column; 
+    height: 100vh; background: var(--bg-primary); 
+    border-radius: var(--radius); 
+    overflow: hidden; 
+    border: 1px solid var(--border); }
+.titlebar { 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; 
+    height: 36px; 
+    padding: 0 10px 0 14px; 
+    background: var(--bg-secondary); 
+    border-bottom: 1px solid var(--border); 
+    flex-shrink: 0; }
+.titlebar-title { 
+    font-size: 11px; 
+    font-weight: 600; 
+    color: var(--text-muted); 
+    letter-spacing: 0.08em; 
+    text-transform: uppercase; }
+.titlebar-actions { 
+    display: flex; 
+    gap: 4px; }
+.titlebar-btn { 
+    width: 22px; 
+    height: 22px; 
+    border-radius: 50%; 
+    font-size: 15px; 
+    color: var(--text-muted); 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; }
+.titlebar-btn:hover { 
+    background: rgba(255,255,255,0.1); 
+    color: var(--text-primary); }
+.app-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}

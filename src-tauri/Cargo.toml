@@ -1,0 +1,32 @@
+[package]
+name = "osu-player"
+version = "0.1.0"
+description = "A lightweight osu! music player"
+authors = ["you"]
+license = "MIT"
+repository = "https://github.com/you/osu-player"
+edition = "2021"
+
+[lib]
+name = "osu_player_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["protocol-asset", "tray-icon"] }
+tauri-plugin-fs = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-shell = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+walkdir = "2"
+id3 = "1"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true

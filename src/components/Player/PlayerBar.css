@@ -1,0 +1,132 @@
+.player-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  margin-top: auto;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Background beatmap */
+.player-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: blur(18px) saturate(0.7);
+  transform: scale(1.1);
+  transition: background-image 0.6s ease;
+  z-index: 0;
+}
+
+.player-bg-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.62);
+  z-index: 1;
+}
+
+/* Tout le contenu passe au-dessus du bg */
+.player-bar > *:not(.player-bg):not(.player-bg-overlay) {
+  position: relative;
+  z-index: 2;
+}
+
+/* Cover */
+.player-cover {
+  position: relative;
+  width: 64px; height: 64px;
+  border-radius: calc(var(--radius) - 4px);
+  overflow: hidden;
+  background: var(--bg-tertiary);
+  flex-shrink: 0;
+  align-self: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+.player-cover img { width: 100%; height: 100%; object-fit: cover; }
+.player-cover-placeholder {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; color: var(--text-muted);
+}
+.player-cover-eq {
+  position: absolute; inset: 0;
+  display: flex; align-items: flex-end; justify-content: center;
+  gap: 3px; padding: 8px;
+  background: rgba(0,0,0,0.4);
+}
+.player-cover-eq span {
+  width: 4px; background: var(--accent); border-radius: 2px;
+  animation: eq 0.8s ease-in-out infinite alternate;
+}
+.player-cover-eq span:nth-child(1) { height: 12px; animation-delay: 0s; }
+.player-cover-eq span:nth-child(2) { height: 20px; animation-delay: 0.2s; }
+.player-cover-eq span:nth-child(3) { height: 8px; animation-delay: 0.4s; }
+@keyframes eq { from { transform: scaleY(0.4); } to { transform: scaleY(1); } }
+
+/* Track info */
+.player-info { text-align: center; }
+.player-title {
+  font-size: 14px; font-weight: 600; color: var(--text-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 300px; margin: 0 auto;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+}
+.player-artist {
+  font-size: 12px; color: var(--text-secondary); margin-top: 2px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+.player-bpm { font-size: 11px; color: var(--accent); margin-top: 2px; font-variant-numeric: tabular-nums; }
+
+/* Progress */
+.player-progress { display: flex; align-items: center; gap: 8px; }
+.player-time { font-size: 11px; color: var(--text-muted); font-variant-numeric: tabular-nums; width: 32px; text-align: center; flex-shrink: 0; }
+
+.player-seek {
+  -webkit-appearance: none; appearance: none;
+  flex: 1; height: 3px; border-radius: 3px;
+  background: rgba(255,255,255,0.15);
+  outline: none; cursor: pointer;
+}
+.player-seek::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--accent); cursor: pointer;
+  transition: transform 0.1s;
+}
+.player-seek:hover::-webkit-slider-thumb { transform: scale(1.3); }
+.player-seek.sm { height: 3px; }
+
+/* Controls */
+.player-controls { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.ctrl-btn {
+  font-size: 16px; width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-secondary); transition: all 0.15s;
+}
+.ctrl-btn:hover { color: var(--text-primary); background: rgba(255,255,255,0.1); }
+.ctrl-btn.active { color: var(--accent); }
+.ctrl-btn.sm { width: 28px; height: 28px; font-size: 14px; }
+.play-btn {
+  width: 44px; height: 44px; font-size: 18px;
+  background: var(--accent) !important; color: white !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+.play-btn:hover { background: var(--accent-hover) !important; transform: scale(1.05); }
+
+/* Extras */
+.player-extras { display: flex; align-items: center; justify-content: space-between; }
+.player-volume { display: flex; align-items: center; gap: 6px; flex: 1; }
+.player-volume .player-seek { max-width: 80px; }
+.player-nav-btns { display: flex; gap: 4px; }
+.nav-btn {
+  font-size: 16px; width: 30px; height: 30px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted);
+}
+.nav-btn:hover { color: var(--text-primary); background: rgba(255,255,255,0.1); }
+.nav-btn.active { color: var(--accent); background: rgba(255,102,170,0.1); }
