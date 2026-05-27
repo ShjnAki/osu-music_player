@@ -1,10 +1,15 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Track, PlayerStatus, RepeatMode, Theme } from '@/types';
+import type { Track, PlayerStatus, RepeatMode, Theme, Playlist } from '@/types';
 
 interface PlayerState {
   tracks: Track[];
   searchQuery: string;
+  bpmFilter: [number, number] | null;
+  favoritesOnly: boolean;
+  favoriteIds: Set<string>;
+  playlists: Playlist[];
+  activePlaylistId: string | null;
   songsFolder: string;
   isScanning: boolean;
   currentTrack: Track | null;
@@ -21,6 +26,14 @@ interface PlayerState {
 
   setTracks: (tracks: Track[]) => void;
   setSearchQuery: (q: string) => void;
+  setBpmFilter: (range: [number, number] | null) => void;
+  setFavoritesOnly: (v: boolean) => void;
+  toggleFavorite: (id: string) => void;
+  createPlaylist: (name: string) => void;
+  deletePlaylist: (id: string) => void;
+  addToPlaylist: (playlistId: string, trackId: string) => void;
+  removeFromPlaylist: (playlistId: string, trackId: string) => void;
+  setActivePlaylist: (id: string | null) => void;
   setSongsFolder: (path: string) => void;
   setIsScanning: (v: boolean) => void;
   setCurrentTrack: (track: Track | null) => void;
@@ -38,18 +51,32 @@ interface PlayerState {
   prevTrack: () => void;
 }
 
-function filterTracks(tracks: Track[], query: string): Track[] {
-  if (!query) return tracks;
-  const q = query.toLowerCase();
-  return tracks.filter(t =>
-    t.title.toLowerCase().includes(q) || t.artist.toLowerCase().includes(q)
-  );
+export function filterTracks(
+  tracks: Track[],
+  query: string,
+  bpmFilter: [number, number] | null,
+  favoritesOnly: boolean,
+  favoriteIds: Set<string>,
+  playlistTrackIds: string[] | null,
+): Track[] {
+  let result = playlistTrackIds
+    ? tracks.filter(t => playlistTrackIds.includes(t.id))
+    : tracks;
+  if (favoritesOnly) result = result.filter(t => favoriteIds.has(t.id));
+  if (bpmFilter) result = result.filter(t => t.bpm != null && t.bpm >= bpmFilter[0] && t.bpm <= bpmFilter[1]);
+  if (query) {
+    const q = query.toLowerCase();
+    result = result.filter(t => t.title.toLowerCase().includes(q) || t.artist.toLowerCase().includes(q));
+  }
+  return result;
 }
 
 export const usePlayerStore = create<PlayerState>()(
   persist(
     (set, get) => ({
-      tracks: [], searchQuery: '',
+      tracks: [], searchQuery: '', bpmFilter: null,
+      favoritesOnly: false, favoriteIds: new Set<string>(),
+      playlists: [], activePlaylistId: null,
       songsFolder: 'C:\\osu!\\Songs', isScanning: false,
       currentTrack: null, status: 'idle', progress: 0,
       volume: 0.8, isMuted: false, isShuffled: false, repeatMode: 'none',
@@ -57,6 +84,35 @@ export const usePlayerStore = create<PlayerState>()(
 
       setTracks: (tracks) => set({ tracks }),
       setSearchQuery: (searchQuery) => set({ searchQuery }),
+      setBpmFilter: (bpmFilter) => set({ bpmFilter }),
+      setFavoritesOnly: (favoritesOnly) => set({ favoritesOnly }),
+      toggleFavorite: (id) => set((s) => {
+        const next = new Set(s.favoriteIds);
+        if (next.has(id)) next.delete(id); else next.add(id);
+        return { favoriteIds: next };
+      }),
+      createPlaylist: (name) => set((s) => ({
+        playlists: [...s.playlists, { id: crypto.randomUUID(), name, trackIds: [] }],
+      })),
+      deletePlaylist: (id) => set((s) => ({
+        playlists: s.playlists.filter(p => p.id !== id),
+        activePlaylistId: s.activePlaylistId === id ? null : s.activePlaylistId,
+      })),
+      addToPlaylist: (playlistId, trackId) => set((s) => ({
+        playlists: s.playlists.map(p =>
+          p.id === playlistId && !p.trackIds.includes(trackId)
+            ? { ...p, trackIds: [...p.trackIds, trackId] }
+            : p
+        ),
+      })),
+      removeFromPlaylist: (playlistId, trackId) => set((s) => ({
+        playlists: s.playlists.map(p =>
+          p.id === playlistId
+            ? { ...p, trackIds: p.trackIds.filter(id => id !== trackId) }
+            : p
+        ),
+      })),
+      setActivePlaylist: (activePlaylistId) => set({ activePlaylistId }),
       setSongsFolder: (songsFolder) => set({ songsFolder }),
       setIsScanning: (isScanning) => set({ isScanning }),
       setCurrentTrack: (currentTrack) => set({ currentTrack, progress: 0 }),
@@ -74,8 +130,9 @@ export const usePlayerStore = create<PlayerState>()(
       toggleSphereMode: () => set((s) => ({ isSphereMode: !s.isSphereMode })),
 
       nextTrack: () => {
-        const { currentTrack, tracks, searchQuery, isShuffled, repeatMode } = get();
-        const visible = filterTracks(tracks, searchQuery);
+        const { currentTrack, tracks, searchQuery, bpmFilter, favoritesOnly, favoriteIds, playlists, activePlaylistId, isShuffled, repeatMode } = get();
+        const playlist = playlists.find(p => p.id === activePlaylistId);
+        const visible = filterTracks(tracks, searchQuery, bpmFilter, favoritesOnly, favoriteIds, playlist?.trackIds ?? null);
         if (!visible.length) return;
         const idx = visible.findIndex((t) => t.id === currentTrack?.id);
         let nextIdx = isShuffled
@@ -87,8 +144,9 @@ export const usePlayerStore = create<PlayerState>()(
       },
 
       prevTrack: () => {
-        const { currentTrack, tracks, searchQuery, progress } = get();
-        const visible = filterTracks(tracks, searchQuery);
+        const { currentTrack, tracks, searchQuery, bpmFilter, favoritesOnly, favoriteIds, playlists, activePlaylistId, progress } = get();
+        const playlist = playlists.find(p => p.id === activePlaylistId);
+        const visible = filterTracks(tracks, searchQuery, bpmFilter, favoritesOnly, favoriteIds, playlist?.trackIds ?? null);
         if (!visible.length) return;
         if (progress > 0.05) { set({ progress: 0, status: 'loading' }); return; }
         const idx = visible.findIndex((t) => t.id === currentTrack?.id);
@@ -104,6 +162,13 @@ export const usePlayerStore = create<PlayerState>()(
         isShuffled: s.isShuffled,
         repeatMode: s.repeatMode,
         currentTheme: s.currentTheme,
+        favoriteIds: Array.from(s.favoriteIds),
+        playlists: s.playlists,
+      }),
+      merge: (persisted: any, current) => ({
+        ...current,
+        ...persisted,
+        favoriteIds: new Set<string>(persisted.favoriteIds ?? []),
       }),
     }
   )

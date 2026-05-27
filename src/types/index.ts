@@ -8,7 +8,13 @@ export interface Track {
   path: string;
   beatmapSet?: string;
   coverPath?: string;
-  backgroundPath?: string; // ← image de fond depuis le .osu
+  backgroundPath?: string;
+}
+
+export interface Playlist {
+  id: string;
+  name: string;
+  trackIds: string[];
 }
 
 export interface Theme {
