@@ -7,10 +7,10 @@ type Tab = 'all' | 'favorites' | 'playlists';
 
 export function Library() {
   const {
-    tracks, searchQuery, bpmFilter, favoritesOnly, favoriteIds,
+    tracks, searchQuery, bpmFilter, favoriteIds,
     playlists, activePlaylistId,
     currentTrack, setSearchQuery, setCurrentTrack,
-    setBpmFilter, setFavoritesOnly, toggleFavorite,
+    setBpmFilter, toggleFavorite,
     createPlaylist, deletePlaylist, addToPlaylist, setActivePlaylist,
   } = usePlayerStore();
 
