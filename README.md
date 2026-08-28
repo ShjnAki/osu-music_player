@@ -4,6 +4,14 @@ A lightweight, themeable desktop music player for your osu! beatmap collection.
 
 Built with **Tauri 2.0** (Rust) + **React 18** + **TypeScript**.
 
+## Download
+
+**[⬇️ Download the latest release](https://github.com/ShjnAki/osu-music_player/releases/latest)** — Windows installer, no compilation needed.
+
+Grab the `.msi` (or `.exe` NSIS installer), run it, then point the app at your osu! `Songs` folder on first launch.
+
+Want to build it yourself instead? See [Getting Started](#getting-started).
+
 ## Features
 
 - 🎵 Plays MP3 and OGG files from your osu! Songs folder
@@ -19,6 +27,12 @@ Built with **Tauri 2.0** (Rust) + **React 18** + **TypeScript**.
 - 💾 Settings persisted between sessions
 - 🪟 Frameless, draggable window
 
+## Screenshots
+
+| Sphere mode | Library |
+| --- | --- |
+| ![Sphere mode](docs/screenshot-sphere.png) | ![Library view](docs/screenshot-library.png) |
+
 ## Prerequisites
 
 - [Node.js 18+](https://nodejs.org/) LTS version
@@ -28,6 +42,8 @@ Built with **Tauri 2.0** (Rust) + **React 18** + **TypeScript**.
   - WebView2 (included in Windows 11, installer available for Windows 10)
 
 ## Getting Started
+
+For contributors, or if you'd rather compile from source than use the [prebuilt installer](#download):
 
 ```bash
 # Install dependencies

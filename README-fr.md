@@ -4,6 +4,14 @@ Un lecteur de musique bureau léger et personnalisable pour ta collection de bea
 
 Développé avec **Tauri 2.0** (Rust) + **React 18** + **TypeScript**.
 
+## Téléchargement
+
+**[⬇️ Télécharger la dernière version](https://github.com/ShjnAki/osu-music_player/releases/latest)** — installeur Windows, aucune compilation nécessaire.
+
+Récupère le `.msi` (ou l'installeur NSIS `.exe`), lance-le, puis indique ton dossier osu! `Songs` au premier démarrage.
+
+Tu préfères compiler toi-même ? Voir [Démarrage rapide](#démarrage-rapide).
+
 ## Fonctionnalités
 
 - 🎵 Lecture des fichiers MP3 et OGG depuis ton dossier osu! Songs
@@ -16,6 +24,12 @@ Développé avec **Tauri 2.0** (Rust) + **React 18** + **TypeScript**.
 - 💾 Paramètres sauvegardés entre les sessions
 - 🪟 Fenêtre sans bordure, déplaçable
 
+## Captures d'écran
+
+| Mode sphère | Bibliothèque |
+| --- | --- |
+| ![Mode sphère](docs/screenshot-sphere.png) | ![Bibliothèque](docs/screenshot-library.png) |
+
 ## Prérequis
 
 - [Node.js 18+](https://nodejs.org/) LTS version
@@ -25,6 +39,8 @@ Développé avec **Tauri 2.0** (Rust) + **React 18** + **TypeScript**.
   - WebView2
 
 ## Démarrage rapide
+
+Pour les contributeurs, ou si tu préfères compiler depuis les sources plutôt qu'utiliser l'[installeur prêt à l'emploi](#téléchargement) :
 
 ```bash
 # Installer les dépendances
