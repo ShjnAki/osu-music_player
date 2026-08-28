@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.2.0] - 2026-08-28
 
 ### Added
 - **Sphere mode**: circular always-on-top window (360×360) with beatmap background, scrollable track list, playback controls, and progress bar. Toggle via ◎ in titlebar.
