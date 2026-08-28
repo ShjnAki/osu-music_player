@@ -72,6 +72,17 @@ fn is_main_audio(path: &Path) -> bool {
         && filename.len() > 2
 }
 
+/// Estimation grossière de la durée à partir de la taille du fichier.
+///
+/// Fallback utilisé uniquement quand aucun tag ID3 exploitable n'est disponible
+/// (rare sur les beatmaps osu!, qui sont presque toujours taguées).
+///
+/// Limitation connue : le débit est supposé fixe (~128 kbps en MP3), alors que
+/// les beatmaps vont de 96 à 320 kbps. La durée calculée peut donc être
+/// surestimée jusqu'à ~2,5x sur un fichier 320 kbps et sous-estimée sur du
+/// 96 kbps — assez pour qu'un morceau tombe du mauvais côté du filtre
+/// `duration_in_range` (30–600 s). Lire le frame header MPEG donnerait le
+/// vrai bitrate si ça devient un problème.
 fn estimate_duration_from_size(path: &Path, ext: &str) -> Option<u64> {
     let size = std::fs::metadata(path).ok()?.len();
     let bytes_per_sec: u64 = if ext == "mp3" { 16_000 } else { 20_000 };
