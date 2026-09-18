@@ -1,5 +1,7 @@
 #![allow(unused_imports)]
 
+mod osu_parse;
+
 use id3::TagLike;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
@@ -7,6 +9,11 @@ use walkdir::WalkDir;
 
 const MIN_DURATION_SECS: u64 = 30;
 const MAX_DURATION_SECS: u64 = 600;
+
+/// Incrémenter invalide les caches existants. Nécessaire quand le scan produit
+/// des champs que les anciens caches n'ont pas : sans ça, un cache dont la
+/// mtime n'a pas bougé est resservi indéfiniment, sans les nouvelles données.
+const CACHE_VERSION: u32 = 2;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Track {
@@ -93,54 +100,35 @@ fn duration_in_range(duration_secs: u64) -> bool {
     duration_secs >= MIN_DURATION_SECS && duration_secs <= MAX_DURATION_SECS
 }
 
-/// Parse le fichier .osu pour trouver l'image de fond dans la section [Events]
-/// Ligne typique: 0,0,"bg.jpg",0,0  ou  Background,0,"bg.jpg",0,0
-fn get_background_from_osu(folder: &Path) -> Option<String> {
-    // Trouve le premier fichier .osu dans le dossier
-    let osu_file = std::fs::read_dir(folder).ok()?.find_map(|e| {
-        let entry = e.ok()?;
-        let name = entry.file_name().to_string_lossy().to_lowercase();
-        if name.ends_with(".osu") {
-            Some(entry.path())
-        } else {
-            None
-        }
-    })?;
-
-    let content = std::fs::read_to_string(&osu_file).ok()?;
-
-    let mut in_events = false;
-    for line in content.lines() {
-        let trimmed = line.trim();
-
-        if trimmed == "[Events]" {
-            in_events = true;
-            continue;
-        }
-        // Quitter la section Events si on atteint une autre section
-        if in_events && trimmed.starts_with('[') {
-            break;
-        }
-
-        if in_events {
-            // Format: 0,0,"filename.jpg",0,0
-            // ou:     Background,0,"filename.jpg",0,0
-            if trimmed.starts_with("0,0,") || trimmed.to_lowercase().starts_with("background,") {
-                // Extraire le nom du fichier entre guillemets
-                if let Some(start) = trimmed.find('"') {
-                    if let Some(end) = trimmed[start + 1..].find('"') {
-                        let img_name = &trimmed[start + 1..start + 1 + end];
-                        let img_path = folder.join(img_name);
-                        if img_path.exists() {
-                            return Some(img_path.to_string_lossy().to_string());
-                        }
-                    }
-                }
+/// Image de fond et BPM d'une beatmap, lus en une seule passe sur le premier
+/// `.osu` du dossier — le scan traverse des milliers de dossiers, doubler les
+/// lectures pour deux informations tirées du même fichier serait gratuit.
+fn read_osu_metadata(folder: &Path, duration_secs: Option<u64>) -> (Option<String>, Option<f32>) {
+    let osu_file = std::fs::read_dir(folder).ok().and_then(|mut dir| {
+        dir.find_map(|e| {
+            let entry = e.ok()?;
+            let name = entry.file_name().to_string_lossy().to_lowercase();
+            if name.ends_with(".osu") {
+                Some(entry.path())
+            } else {
+                None
             }
-        }
-    }
+        })
+    });
 
-    None
+    let Some(content) = osu_file.and_then(|path| std::fs::read_to_string(path).ok()) else {
+        return (None, None);
+    };
+
+    let background = osu_parse::parse_background_filename(&content)
+        .map(|name| folder.join(name))
+        .filter(|path| path.exists())
+        .map(|path| path.to_string_lossy().to_string());
+
+    (
+        background,
+        osu_parse::parse_dominant_bpm(&content, duration_secs),
+    )
 }
 
 #[tauri::command]
@@ -222,8 +210,8 @@ fn scan_osu_songs(folder_path: String) -> Result<Vec<Track>, String> {
                 })
             });
 
-            // Background depuis le fichier .osu
-            let background_path = get_background_from_osu(parent_dir);
+            // Fond et BPM depuis le fichier .osu
+            let (background_path, bpm) = read_osu_metadata(parent_dir, duration);
 
             let id = format!("{:x}", md5_simple(&path_str));
 
@@ -232,7 +220,7 @@ fn scan_osu_songs(folder_path: String) -> Result<Vec<Track>, String> {
                 title,
                 artist,
                 album,
-                bpm: None,
+                bpm,
                 duration,
                 path: path_str,
                 beatmap_set: Some(folder_name),
@@ -248,6 +236,8 @@ fn scan_osu_songs(folder_path: String) -> Result<Vec<Track>, String> {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TracksCache {
+    #[serde(default)] // absent des caches écrits avant l'introduction du champ
+    pub version: u32,
     pub folder_mtime: u64,
     pub tracks: Vec<Track>,
 }
@@ -273,7 +263,7 @@ fn load_tracks_cache(cache_path: String, folder_path: String) -> Option<Vec<Trac
     let content = std::fs::read_to_string(&cache_path).ok()?;
     let cache: TracksCache = serde_json::from_str(&content).ok()?;
     let current_mtime = folder_mtime(&folder_path);
-    if current_mtime == cache.folder_mtime {
+    if cache.version == CACHE_VERSION && current_mtime == cache.folder_mtime {
         Some(cache.tracks)
     } else {
         None
@@ -283,6 +273,7 @@ fn load_tracks_cache(cache_path: String, folder_path: String) -> Option<Vec<Trac
 #[tauri::command]
 fn save_tracks_cache(cache_path: String, folder_path: String, tracks: Vec<Track>) -> Result<(), String> {
     let cache = TracksCache {
+        version: CACHE_VERSION,
         folder_mtime: folder_mtime(&folder_path),
         tracks,
     };
