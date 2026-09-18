@@ -13,9 +13,8 @@
     "fs:allow-read-file",
     "fs:allow-read-dir",
     "fs:allow-write-file",
-    "fs:allow-create-dir",
+    "fs:allow-mkdir",
     "fs:allow-exists",
-    "path:allow-app-local-data-dir",
     "dialog:allow-open",
     "shell:allow-open"
   ]
