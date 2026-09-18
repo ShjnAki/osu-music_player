@@ -4,7 +4,7 @@ mod osu_parse;
 
 use id3::TagLike;
 use serde::{Deserialize, Serialize};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
 const MIN_DURATION_SECS: u64 = 30;
@@ -98,6 +98,79 @@ fn estimate_duration_from_size(path: &Path, ext: &str) -> Option<u64> {
 
 fn duration_in_range(duration_secs: u64) -> bool {
     duration_secs >= MIN_DURATION_SECS && duration_secs <= MAX_DURATION_SECS
+}
+
+/// Emplacements où osu! range ses beatmaps sous Windows, du plus probable au moins.
+fn windows_songs_candidates(local_app_data: Option<&str>, drives: &[char]) -> Vec<PathBuf> {
+    // Chemins construits à la main plutôt qu'avec `join` : le séparateur de
+    // `Path` suit l'OS hôte, or ces chemins doivent rester en antislash même
+    // quand le code tourne ailleurs (tests sous Linux).
+    let mut candidates = vec![PathBuf::from("C:\\osu!\\Songs")];
+    if let Some(dir) = local_app_data {
+        candidates.push(PathBuf::from(format!(
+            "{}\\osu!\\Songs",
+            dir.trim_end_matches('\\')
+        )));
+    }
+    candidates.extend(
+        drives
+            .iter()
+            .map(|letter| PathBuf::from(format!("{letter}:\\osu!\\Songs"))),
+    );
+    candidates
+}
+
+/// Emplacements où osu! range ses beatmaps sous Linux, du plus probable au moins.
+///
+/// osu! stable n'a pas de version native : il tourne sous Wine, d'où les préfixes.
+/// `/mnt/c` couvre le cas WSL, où l'installation est côté Windows.
+fn linux_songs_candidates(home: &str, wsl_mounts: &[PathBuf]) -> Vec<PathBuf> {
+    let home = Path::new(home);
+    let mut candidates = vec![
+        home.join(".wine/drive_c/osu!/Songs"),
+        home.join(".local/share/osu-wine/osu!/Songs"),
+        home.join(".local/share/wineprefixes/osu-wine/drive_c/osu!/Songs"),
+    ];
+    candidates.extend(wsl_mounts.iter().map(|mount| mount.join("osu!/Songs")));
+    candidates
+}
+
+/// Lettres de lecteur à tester sous Windows, et points de montage sous WSL :
+/// une installation osu! n'est pas forcément sur le disque système.
+fn mounted_drive_letters() -> Vec<char> {
+    ('C'..='Z').collect()
+}
+
+fn wsl_mounts() -> Vec<PathBuf> {
+    std::fs::read_dir("/mnt")
+        .map(|entries| {
+            entries
+                .filter_map(|entry| entry.ok())
+                .map(|entry| entry.path())
+                .filter(|path| path.is_dir())
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+/// Premier emplacement osu! existant, ou une chaîne vide si aucun n'est trouvé —
+/// le front ouvre alors le sélecteur de dossier.
+#[tauri::command]
+fn default_songs_folder() -> String {
+    let local_app_data = std::env::var("LOCALAPPDATA").ok();
+    let home = std::env::var("HOME").unwrap_or_default();
+
+    let candidates = if cfg!(target_os = "windows") {
+        windows_songs_candidates(local_app_data.as_deref(), &mounted_drive_letters())
+    } else {
+        linux_songs_candidates(&home, &wsl_mounts())
+    };
+
+    candidates
+        .into_iter()
+        .find(|path| path.is_dir())
+        .map(|path| path.to_string_lossy().to_string())
+        .unwrap_or_default()
 }
 
 /// Image de fond et BPM d'une beatmap, lus en une seule passe sur le premier
@@ -309,10 +382,87 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
             scan_osu_songs,
+            default_songs_folder,
             load_tracks_cache,
             save_tracks_cache,
             set_sphere_mode,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn as_strings(paths: Vec<PathBuf>) -> Vec<String> {
+        paths
+            .into_iter()
+            .map(|p| p.to_string_lossy().to_string())
+            .collect()
+    }
+
+    #[test]
+    fn windows_candidates_start_with_the_default_install_path() {
+        let candidates = as_strings(windows_songs_candidates(None, &[]));
+        assert_eq!(candidates.first().map(String::as_str), Some("C:\\osu!\\Songs"));
+    }
+
+    #[test]
+    fn windows_candidates_include_local_app_data_install() {
+        let candidates = as_strings(windows_songs_candidates(
+            Some("C:\\Users\\coren\\AppData\\Local"),
+            &[],
+        ));
+        assert!(
+            candidates
+                .iter()
+                .any(|c| c == "C:\\Users\\coren\\AppData\\Local\\osu!\\Songs"),
+            "candidats obtenus : {candidates:?}"
+        );
+    }
+
+    #[test]
+    fn windows_candidates_omit_local_app_data_when_unset() {
+        let candidates = as_strings(windows_songs_candidates(None, &[]));
+        assert!(
+            candidates.iter().all(|c| !c.contains("AppData")),
+            "candidats obtenus : {candidates:?}"
+        );
+    }
+
+    #[test]
+    fn windows_candidates_cover_installs_on_other_drives() {
+        let candidates = as_strings(windows_songs_candidates(None, &['C', 'S']));
+        assert!(
+            candidates.contains(&"S:\\osu!\\Songs".to_string()),
+            "candidats obtenus : {candidates:?}"
+        );
+    }
+
+    #[test]
+    fn linux_candidates_include_the_default_wine_prefix() {
+        let candidates = as_strings(linux_songs_candidates("/home/shin", &[]));
+        assert!(
+            candidates.contains(&"/home/shin/.wine/drive_c/osu!/Songs".to_string()),
+            "candidats obtenus : {candidates:?}"
+        );
+    }
+
+    #[test]
+    fn linux_candidates_cover_every_wsl_mount() {
+        let mounts = [PathBuf::from("/mnt/c"), PathBuf::from("/mnt/s")];
+        let candidates = as_strings(linux_songs_candidates("/home/shin", &mounts));
+        assert!(
+            candidates.contains(&"/mnt/s/osu!/Songs".to_string()),
+            "candidats obtenus : {candidates:?}"
+        );
+    }
+
+    #[test]
+    fn linux_candidates_are_all_absolute() {
+        let candidates = linux_songs_candidates("/home/shin", &[PathBuf::from("/mnt/c")]);
+        assert!(!candidates.is_empty());
+        assert!(candidates.iter().all(|p| p.is_absolute()));
+    }
 }

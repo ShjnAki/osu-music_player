@@ -6,9 +6,12 @@ Built with **Tauri 2.0** (Rust) + **React 18** + **TypeScript**.
 
 ## Download
 
-**[⬇️ Download the latest release](https://github.com/ShjnAki/osu-music_player/releases/latest)** — Windows installer, no compilation needed.
+**[⬇️ Download the latest release](https://github.com/ShjnAki/osu-music_player/releases/latest)** — no compilation needed.
 
-Grab the `.msi` (or `.exe` NSIS installer), run it, then point the app at your osu! `Songs` folder on first launch.
+- **Windows** — the `.msi`, or the `.exe` NSIS installer
+- **Linux** — the `.AppImage` (portable: `chmod +x`, then run) or the `.deb`
+
+On first launch the app looks for your osu! `Songs` folder on its own, including Wine prefixes and WSL mounts on Linux, and opens the folder picker if it can't find one.
 
 Want to build it yourself instead? See [Getting Started](#getting-started).
 
@@ -37,9 +40,9 @@ Want to build it yourself instead? See [Getting Started](#getting-started).
 
 - [Node.js 18+](https://nodejs.org/) LTS version
 - [Rust (stable)](https://rustup.rs/) or `winget install Rustlang.Rustup` then `rustup default stable`
-- [Tauri prerequisites for Windows](https://v2.tauri.app/start/prerequisites/)
-  - Microsoft C++ Build Tools `winget install Microsoft.VisualStudio.2022.BuildTools`
-  - WebView2 (included in Windows 11, installer available for Windows 10)
+- [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/) for your platform:
+  - **Windows** — Microsoft C++ Build Tools (`winget install Microsoft.VisualStudio.2022.BuildTools`, with the C++ workload) and WebView2 (included in Windows 11, installer available for Windows 10)
+  - **Linux** — `sudo apt install libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev` (Debian/Ubuntu; see the Tauri docs for other distributions)
 
 ## Getting Started
 

@@ -1,0 +1,9 @@
+{
+  "app": {
+    "security": {
+      "assetProtocol": {
+        "scope": ["$HOME/**", "/mnt/**", "/media/**", "/run/media/**"]
+      }
+    }
+  }
+}

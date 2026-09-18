@@ -1,0 +1,9 @@
+{
+  "app": {
+    "security": {
+      "assetProtocol": {
+        "scope": ["C:\\**", "$HOME\\**"]
+      }
+    }
+  }
+}

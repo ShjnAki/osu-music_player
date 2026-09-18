@@ -4,7 +4,7 @@ import { useAudio } from '@/hooks/useAudio';
 import { usePlayerStore } from '@/stores/playerStore';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { appLocalDataDir } from '@tauri-apps/api/path';
+import { appLocalDataDir, join } from '@tauri-apps/api/path';
 import type { Track } from '@/types';
 import { PlayerBar } from '@/components/Player/PlayerBar';
 import { Library } from '@/components/Library/Library';
@@ -17,8 +17,8 @@ export default function App() {
   useTheme();
   const { toggle, seek } = useAudio();
   const {
-    songsFolder, setTracks, setIsScanning, isScanning,
-    showSettings, showLibrary, isSphereMode, toggleSphereMode,
+    songsFolder, setSongsFolder, setTracks, setIsScanning, isScanning,
+    showSettings, setShowSettings, showLibrary, isSphereMode, toggleSphereMode,
   } = usePlayerStore();
   const [scanError, setScanError] = useState<string | null>(null);
 
@@ -42,19 +42,26 @@ export default function App() {
     backgroundPath: t.background_path,
   });
 
-  const getCachePath = async () => {
-    const dir = await appLocalDataDir();
-    return `${dir}tracks-cache.json`;
-  };
+  const getCachePath = async () => join(await appLocalDataDir(), 'tracks-cache.json');
 
   const loadOrScan = async () => {
+    let folder = songsFolder;
+    if (!folder) {
+      folder = await invoke<string>('default_songs_folder').catch(() => '');
+      if (!folder) {
+        setShowSettings(true);
+        return;
+      }
+      setSongsFolder(folder);
+    }
+
     setIsScanning(true);
     setScanError(null);
     try {
       const cachePath = await getCachePath();
       const cached = await invoke<any[] | null>('load_tracks_cache', {
         cachePath,
-        folderPath: songsFolder,
+        folderPath: folder,
       });
       if (cached) {
         setTracks(cached.map(mapRaw));
@@ -65,18 +72,18 @@ export default function App() {
     } finally {
       setIsScanning(false);
     }
-    await handleScan();
+    await handleScan(folder);
   };
 
-  const handleScan = async () => {
+  const handleScan = async (folder: string) => {
     setIsScanning(true);
     setScanError(null);
     try {
-      const raw = await invoke<any[]>('scan_osu_songs', { folderPath: songsFolder });
+      const raw = await invoke<any[]>('scan_osu_songs', { folderPath: folder });
       const tracks = raw.map(mapRaw);
       setTracks(tracks);
       const cachePath = await getCachePath();
-      invoke('save_tracks_cache', { cachePath, folderPath: songsFolder, tracks: raw }).catch(() => {});
+      invoke('save_tracks_cache', { cachePath, folderPath: folder, tracks: raw }).catch(() => {});
     } catch (e) {
       setScanError(String(e));
     } finally {
@@ -115,7 +122,7 @@ export default function App() {
       )}
       <div className="app-body">
         {showSettings ? (
-          <Settings onScan={handleScan} isScanning={isScanning} />
+          <Settings onScan={() => handleScan(songsFolder)} isScanning={isScanning} />
         ) : (
           <>
             {showLibrary && <Library />}

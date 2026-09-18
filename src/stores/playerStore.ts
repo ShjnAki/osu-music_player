@@ -77,7 +77,7 @@ export const usePlayerStore = create<PlayerState>()(
       tracks: [], searchQuery: '', bpmFilter: null,
       favoritesOnly: false, favoriteIds: new Set<string>(),
       playlists: [], activePlaylistId: null,
-      songsFolder: 'C:\\osu!\\Songs', isScanning: false,
+      songsFolder: '', isScanning: false,
       currentTrack: null, status: 'idle', progress: 0,
       volume: 0.8, isMuted: false, isShuffled: false, repeatMode: 'none',
       currentTheme: null, showLibrary: true, showSettings: false, isSphereMode: false,

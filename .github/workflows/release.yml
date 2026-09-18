@@ -15,6 +15,10 @@ jobs:
         include:
           - platform: windows-latest
             args: ""
+          # La plus ancienne Ubuntu supportée : l'AppImage produit y est lié à une
+          # glibc plus ancienne, donc utilisable sur davantage de distributions.
+          - platform: ubuntu-22.04
+            args: ""
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -27,6 +31,12 @@ jobs:
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Linux dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
 
       - name: Install frontend dependencies
         run: npm install
