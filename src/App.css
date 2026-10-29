@@ -54,8 +54,10 @@
 }
 .sphere-exit-btn {
   position: absolute;
-  top: -10px;
-  right: -10px;
+  /* Dans le coin laissé libre par le cercle : à -10px, le bouton débordait
+     d'une fenêtre qui a exactement la taille de la sphère et était rogné. */
+  top: 10px;
+  right: 10px;
   width: 26px;
   height: 26px;
   border-radius: 50%;

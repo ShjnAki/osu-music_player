@@ -1,7 +1,12 @@
 import { useMemo, useState } from 'react';
 import { usePlayerStore, filterTracks } from '@/stores/playerStore';
+import { useVirtualRows } from '@/hooks/useVirtualRows';
 import type { Track } from '@/types';
 import './Library.css';
+
+// Doit égaler la hauteur rendue de .track-row : la virtualisation calcule les
+// positions sans mesurer le DOM.
+const TRACK_ROW_HEIGHT = 47;
 
 type Tab = 'all' | 'favorites' | 'playlists';
 
@@ -32,6 +37,9 @@ export function Library() {
       activePlaylist?.trackIds ?? null,
     );
   }, [tracks, searchQuery, bpmFilter, activeFavOnly, favoriteIds, activePlaylist]);
+
+  const { containerRef, start, end, totalHeight, offsetTop } =
+    useVirtualRows<HTMLDivElement>(filtered.length, TRACK_ROW_HEIGHT);
 
   const formatDuration = (secs?: number) => {
     if (!secs) return '';
@@ -146,7 +154,7 @@ export function Library() {
         </div>
       )}
 
-      <div className="library-list">
+      <div className="library-list" ref={containerRef}>
         {filtered.length === 0 ? (
           <div className="library-empty">
             {tracks.length === 0 ? (
@@ -159,43 +167,48 @@ export function Library() {
             )}
           </div>
         ) : (
-          filtered.map((track: Track) => (
-            <div
-              key={track.id}
-              className={`track-row ${currentTrack?.id === track.id ? 'active' : ''}`}
-              onClick={() => setCurrentTrack(track)}
-            >
-              <div className="track-thumb">
-                {currentTrack?.id === track.id ? (
-                  <span className="track-playing">▶</span>
-                ) : (
-                  <span className="track-num">♪</span>
-                )}
-              </div>
-              <div className="track-info">
-                <div className="track-title">{track.title}</div>
-                <div className="track-artist">{track.artist}</div>
-              </div>
-              <div className="track-meta">
-                {track.bpm && <span className="track-bpm">{Math.round(track.bpm)}</span>}
-                <span className="track-duration">{formatDuration(track.duration)}</span>
-              </div>
-              <div className="track-actions" onClick={(e) => e.stopPropagation()}>
-                <button
-                  className={`track-fav-btn ${favoriteIds.has(track.id) ? 'active' : ''}`}
-                  onClick={() => toggleFavorite(track.id)}
-                  title="Favorite"
-                >♥</button>
-                {playlists.length > 0 && (
-                  <button
-                    className="track-playlist-btn"
-                    onClick={() => setAddingToPlaylist(track.id)}
-                    title="Add to playlist"
-                  >+</button>
-                )}
-              </div>
+          <div style={{ height: totalHeight, position: 'relative' }}>
+            <div style={{ transform: `translateY(${offsetTop}px)` }}>
+              {filtered.slice(start, end).map((track: Track) => (
+                <div
+                  key={track.id}
+                  className={`track-row ${currentTrack?.id === track.id ? 'active' : ''}`}
+                  style={{ height: TRACK_ROW_HEIGHT }}
+                  onClick={() => setCurrentTrack(track)}
+                >
+                  <div className="track-thumb">
+                    {currentTrack?.id === track.id ? (
+                      <span className="track-playing">▶</span>
+                    ) : (
+                      <span className="track-num">♪</span>
+                    )}
+                  </div>
+                  <div className="track-info">
+                    <div className="track-title">{track.title}</div>
+                    <div className="track-artist">{track.artist}</div>
+                  </div>
+                  <div className="track-meta">
+                    {track.bpm && <span className="track-bpm">{Math.round(track.bpm)}</span>}
+                    <span className="track-duration">{formatDuration(track.duration)}</span>
+                  </div>
+                  <div className="track-actions" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      className={`track-fav-btn ${favoriteIds.has(track.id) ? 'active' : ''}`}
+                      onClick={() => toggleFavorite(track.id)}
+                      title="Favorite"
+                    >♥</button>
+                    {playlists.length > 0 && (
+                      <button
+                        className="track-playlist-btn"
+                        onClick={() => setAddingToPlaylist(track.id)}
+                        title="Add to playlist"
+                      >+</button>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
-          ))
+          </div>
         )}
       </div>
     </div>

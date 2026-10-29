@@ -115,6 +115,62 @@ pub fn parse_background_filename(content: &str) -> Option<String> {
     None
 }
 
+/// Vidéo déclarée dans la section `[Events]`.
+#[derive(Debug, PartialEq)]
+pub struct VideoEvent {
+    pub filename: String,
+    /// Instant de la musique, en millisecondes, où la vidéo démarre : négatif
+    /// quand elle commence avant l'audio.
+    pub offset_ms: i64,
+}
+
+/// Vidéo d'une beatmap : `Video,-500,"clip.mp4"` ou sa forme numérique
+/// `1,-500,"clip.mp4"`.
+pub fn parse_video(content: &str) -> Option<VideoEvent> {
+    let mut in_events = false;
+
+    for line in content.lines() {
+        let trimmed = line.trim();
+
+        if trimmed == "[Events]" {
+            in_events = true;
+            continue;
+        }
+        if in_events && trimmed.starts_with('[') {
+            break;
+        }
+        if !in_events {
+            continue;
+        }
+
+        let mut fields = trimmed.splitn(3, ',');
+        let (Some(kind), Some(offset), Some(rest)) = (fields.next(), fields.next(), fields.next())
+        else {
+            continue;
+        };
+        if !(kind.eq_ignore_ascii_case("video") || kind == "1") {
+            continue;
+        }
+        let Ok(offset_ms) = offset.trim().parse::<i64>() else {
+            continue;
+        };
+        let rest = rest.trim();
+        let filename = match rest.strip_prefix('"') {
+            Some(quoted) => quoted.split('"').next().unwrap_or(""),
+            // Les guillemets sont facultatifs dans les vieilles beatmaps.
+            None => rest.split(',').next().unwrap_or(""),
+        };
+        if !filename.is_empty() {
+            return Some(VideoEvent {
+                filename: filename.to_string(),
+                offset_ms,
+            });
+        }
+    }
+
+    None
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -249,6 +305,65 @@ Video,-500,\"intro.mp4\"
             parse_background_filename(content),
             Some("real-bg.jpg".to_string())
         );
+    }
+
+    #[test]
+    fn video_declaree_par_son_nom_avec_decalage_negatif() {
+        let content = "\
+[Events]
+0,0,\"bg.jpg\",0,0
+Video,-500,\"intro.mp4\"
+";
+        assert_eq!(
+            parse_video(content),
+            Some(VideoEvent { filename: "intro.mp4".to_string(), offset_ms: -500 })
+        );
+    }
+
+    #[test]
+    fn video_declaree_sous_forme_numerique() {
+        let content = "\
+[Events]
+1,1200,\"clip.mp4\"
+";
+        assert_eq!(
+            parse_video(content),
+            Some(VideoEvent { filename: "clip.mp4".to_string(), offset_ms: 1200 })
+        );
+    }
+
+    #[test]
+    fn video_sans_guillemets_des_vieilles_beatmaps() {
+        let content = "\
+[Events]
+Video,0,clip.mp4
+";
+        assert_eq!(
+            parse_video(content).map(|v| v.filename),
+            Some("clip.mp4".to_string())
+        );
+    }
+
+    #[test]
+    fn fond_et_storyboard_ne_sont_pas_pris_pour_une_video() {
+        let content = "\
+[Events]
+0,0,\"bg.jpg\",0,0
+Sprite,Foreground,Centre,\"sb/star.png\",320,240
+";
+        assert_eq!(parse_video(content), None);
+    }
+
+    #[test]
+    fn pas_de_video_hors_de_la_section_events() {
+        let content = "\
+[Events]
+0,0,\"bg.jpg\",0,0
+
+[HitObjects]
+1,0,\"pas-une-video.mp4\"
+";
+        assert_eq!(parse_video(content), None);
     }
 
     #[test]

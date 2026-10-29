@@ -13,7 +13,7 @@ const MAX_DURATION_SECS: u64 = 600;
 /// Incrémenter invalide les caches existants. Nécessaire quand le scan produit
 /// des champs que les anciens caches n'ont pas : sans ça, un cache dont la
 /// mtime n'a pas bougé est resservi indéfiniment, sans les nouvelles données.
-const CACHE_VERSION: u32 = 2;
+const CACHE_VERSION: u32 = 3;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Track {
@@ -27,6 +27,11 @@ pub struct Track {
     pub beatmap_set: Option<String>,
     pub cover_path: Option<String>,
     pub background_path: Option<String>, // ← nouveau
+    #[serde(default)]
+    pub video_path: Option<String>,
+    /// Instant de la musique (ms) où démarre la vidéo, pour la synchroniser.
+    #[serde(default)]
+    pub video_offset_ms: Option<i64>,
 }
 
 fn md5_simple(input: &str) -> u64 {
@@ -173,24 +178,51 @@ fn default_songs_folder() -> String {
         .unwrap_or_default()
 }
 
-/// Image de fond et BPM d'une beatmap, lus en une seule passe sur le premier
-/// `.osu` du dossier — le scan traverse des milliers de dossiers, doubler les
-/// lectures pour deux informations tirées du même fichier serait gratuit.
-fn read_osu_metadata(folder: &Path, duration_secs: Option<u64>) -> (Option<String>, Option<f32>) {
-    let osu_file = std::fs::read_dir(folder).ok().and_then(|mut dir| {
-        dir.find_map(|e| {
-            let entry = e.ok()?;
+/// Formats que la webview sait lire. osu! accepte aussi .avi et .flv, mais
+/// les proposer donnerait un lecteur vide.
+fn is_playable_video(name: &str) -> bool {
+    let name = name.to_lowercase();
+    [".mp4", ".m4v", ".webm"].iter().any(|ext| name.ends_with(ext))
+}
+
+struct OsuMetadata {
+    background: Option<String>,
+    bpm: Option<f32>,
+    video: Option<String>,
+    video_offset_ms: Option<i64>,
+}
+
+/// Image de fond, BPM et vidéo d'une beatmap, lus en une seule passe sur le
+/// premier `.osu` du dossier — le scan traverse des milliers de dossiers,
+/// multiplier les lectures pour des informations tirées du même fichier
+/// serait gratuit.
+fn read_osu_metadata(folder: &Path, duration_secs: Option<u64>) -> OsuMetadata {
+    // Un seul parcours du dossier pour le .osu et une éventuelle vidéo : une
+    // vidéo posée dans le dossier sans être déclarée reste affichable.
+    let mut osu_file = None;
+    let mut loose_video = None;
+    if let Ok(dir) = std::fs::read_dir(folder) {
+        for entry in dir.filter_map(|e| e.ok()) {
             let name = entry.file_name().to_string_lossy().to_lowercase();
-            if name.ends_with(".osu") {
-                Some(entry.path())
-            } else {
-                None
+            if osu_file.is_none() && name.ends_with(".osu") {
+                osu_file = Some(entry.path());
+            } else if loose_video.is_none() && is_playable_video(&name) {
+                loose_video = Some(entry.path());
             }
-        })
-    });
+            if osu_file.is_some() && loose_video.is_some() {
+                break;
+            }
+        }
+    }
+    let loose_video = || loose_video.as_ref().map(|path| path.to_string_lossy().to_string());
 
     let Some(content) = osu_file.and_then(|path| std::fs::read_to_string(path).ok()) else {
-        return (None, None);
+        return OsuMetadata {
+            background: None,
+            bpm: None,
+            video: loose_video(),
+            video_offset_ms: loose_video().map(|_| 0),
+        };
     };
 
     let background = osu_parse::parse_background_filename(&content)
@@ -198,10 +230,23 @@ fn read_osu_metadata(folder: &Path, duration_secs: Option<u64>) -> (Option<Strin
         .filter(|path| path.exists())
         .map(|path| path.to_string_lossy().to_string());
 
-    (
+    let declared = osu_parse::parse_video(&content)
+        .filter(|video| is_playable_video(&video.filename))
+        .map(|video| (folder.join(&video.filename), video.offset_ms))
+        .filter(|(path, _)| path.exists());
+    let (video, video_offset_ms) = match declared {
+        Some((path, offset)) => (Some(path.to_string_lossy().to_string()), Some(offset)),
+        // Sans déclaration, aucun décalage connu : on cale la vidéo sur le
+        // début de la musique.
+        None => (loose_video(), loose_video().map(|_| 0)),
+    };
+
+    OsuMetadata {
         background,
-        osu_parse::parse_dominant_bpm(&content, duration_secs),
-    )
+        bpm: osu_parse::parse_dominant_bpm(&content, duration_secs),
+        video,
+        video_offset_ms,
+    }
 }
 
 #[tauri::command]
@@ -283,8 +328,8 @@ fn scan_osu_songs(folder_path: String) -> Result<Vec<Track>, String> {
                 })
             });
 
-            // Fond et BPM depuis le fichier .osu
-            let (background_path, bpm) = read_osu_metadata(parent_dir, duration);
+            // Fond, BPM et vidéo depuis le fichier .osu
+            let metadata = read_osu_metadata(parent_dir, duration);
 
             let id = format!("{:x}", md5_simple(&path_str));
 
@@ -293,12 +338,14 @@ fn scan_osu_songs(folder_path: String) -> Result<Vec<Track>, String> {
                 title,
                 artist,
                 album,
-                bpm,
+                bpm: metadata.bpm,
                 duration,
                 path: path_str,
                 beatmap_set: Some(folder_name),
                 cover_path,
-                background_path,
+                background_path: metadata.background,
+                video_path: metadata.video,
+                video_offset_ms: metadata.video_offset_ms,
             });
         }
     }
@@ -358,19 +405,27 @@ fn save_tracks_cache(cache_path: String, folder_path: String, tracks: Vec<Track>
     std::fs::write(&cache_path, json).map_err(|e| e.to_string())
 }
 
+/// Taille de la fenêtre selon le mode, en pixels logiques.
+///
+/// Logiques et non physiques : la sphère fait 360 px CSS, et sur un écran à
+/// 150 % une fenêtre de 360 px physiques n'en affiche que 240 — un quart de la
+/// sphère seulement. Le mode normal reprend la taille de `tauri.conf.json`, qui
+/// est elle aussi logique.
+fn window_size(sphere_mode: bool) -> tauri::LogicalSize<f64> {
+    if sphere_mode {
+        tauri::LogicalSize { width: 360.0, height: 360.0 }
+    } else {
+        tauri::LogicalSize { width: 380.0, height: 580.0 }
+    }
+}
+
 #[tauri::command]
 async fn set_sphere_mode(app: tauri::AppHandle, enabled: bool) -> Result<(), String> {
     use tauri::Manager;
     let win = app.get_webview_window("main").ok_or("window not found")?;
-    if enabled {
-        win.set_size(tauri::Size::Physical(tauri::PhysicalSize { width: 360, height: 360 }))
-            .map_err(|e| e.to_string())?;
-        win.set_always_on_top(true).map_err(|e| e.to_string())?;
-    } else {
-        win.set_size(tauri::Size::Physical(tauri::PhysicalSize { width: 380, height: 580 }))
-            .map_err(|e| e.to_string())?;
-        win.set_always_on_top(false).map_err(|e| e.to_string())?;
-    }
+    win.set_size(tauri::Size::Logical(window_size(enabled)))
+        .map_err(|e| e.to_string())?;
+    win.set_always_on_top(enabled).map_err(|e| e.to_string())?;
     Ok(())
 }
 
@@ -457,6 +512,73 @@ mod tests {
             candidates.contains(&"/mnt/s/osu!/Songs".to_string()),
             "candidats obtenus : {candidates:?}"
         );
+    }
+
+    /// Dossier de beatmap jetable : chaque test a le sien, les tests tournant
+    /// en parallèle.
+    fn beatmap_folder(name: &str, files: &[(&str, &str)]) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!("osu-player-test-{name}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        for (file, content) in files {
+            std::fs::write(dir.join(file), content).unwrap();
+        }
+        dir
+    }
+
+    #[test]
+    fn video_declaree_dans_le_osu_avec_son_decalage() {
+        let dir = beatmap_folder("declaree", &[
+            ("map.osu", "[Events]\nVideo,-750,\"clip.mp4\"\n"),
+            ("clip.mp4", ""),
+        ]);
+        let metadata = read_osu_metadata(&dir, None);
+        assert_eq!(metadata.video, Some(dir.join("clip.mp4").to_string_lossy().to_string()));
+        assert_eq!(metadata.video_offset_ms, Some(-750));
+    }
+
+    #[test]
+    fn video_posee_dans_le_dossier_sans_declaration() {
+        let dir = beatmap_folder("posee", &[
+            ("map.osu", "[Events]\n0,0,\"bg.jpg\",0,0\n"),
+            ("Video.MP4", ""),
+        ]);
+        let metadata = read_osu_metadata(&dir, None);
+        assert_eq!(metadata.video, Some(dir.join("Video.MP4").to_string_lossy().to_string()));
+        assert_eq!(metadata.video_offset_ms, Some(0));
+    }
+
+    #[test]
+    fn video_avi_declaree_ignoree_car_illisible_par_la_webview() {
+        let dir = beatmap_folder("avi", &[
+            ("map.osu", "[Events]\nVideo,0,\"clip.avi\"\n"),
+            ("clip.avi", ""),
+        ]);
+        let metadata = read_osu_metadata(&dir, None);
+        assert_eq!(metadata.video, None);
+        assert_eq!(metadata.video_offset_ms, None);
+    }
+
+    #[test]
+    fn video_declaree_mais_absente_du_disque_ignoree() {
+        let dir = beatmap_folder("absente", &[("map.osu", "[Events]\nVideo,0,\"clip.mp4\"\n")]);
+        assert_eq!(read_osu_metadata(&dir, None).video, None);
+    }
+
+    #[test]
+    fn mode_sphere_fenetre_carree_a_la_taille_css_de_la_sphere() {
+        let size = window_size(true);
+        assert_eq!((size.width, size.height), (360.0, 360.0));
+    }
+
+    #[test]
+    fn mode_normal_restaure_la_taille_de_la_config() {
+        let conf: serde_json::Value =
+            serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
+        let window = &conf["app"]["windows"][0];
+        let size = window_size(false);
+        assert_eq!(Some(size.width), window["width"].as_f64());
+        assert_eq!(Some(size.height), window["height"].as_f64());
     }
 
     #[test]

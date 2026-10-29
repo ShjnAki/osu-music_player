@@ -30,8 +30,34 @@
   z-index: 1;
 }
 
+/* Vidéo de la beatmap : nette, contrairement à l'image, car elle est faite
+   pour être regardée. Pas de flou non plus : le recalculer à chaque image
+   coûterait bien plus que sur une image fixe. */
+.player-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: bgFadeIn 0.5s ease;
+  z-index: 0;
+}
+
+/* Le voile uniforme de l'image noyait la vidéo : il s'allège en haut et ne
+   fonce que vers les contrôles, qui doivent rester lisibles. */
+.player-bar.has-video .player-bg-overlay {
+  background: linear-gradient(to bottom,
+    color-mix(in srgb, var(--shade) 25%, transparent),
+    color-mix(in srgb, var(--shade) 50%, transparent) 45%,
+    color-mix(in srgb, var(--shade) 72%, transparent));
+}
+.player-bar.has-video .player-title,
+.player-bar.has-video .player-artist {
+  text-shadow: 0 1px 4px color-mix(in srgb, var(--shade) 80%, transparent);
+}
+
 /* Tout le contenu passe au-dessus du bg */
-.player-bar > *:not(.player-bg):not(.player-bg-overlay) {
+.player-bar > *:not(.player-bg):not(.player-bg-overlay):not(.player-video) {
   position: relative;
   z-index: 2;
 }

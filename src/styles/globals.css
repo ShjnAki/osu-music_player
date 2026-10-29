@@ -1,3 +1,7 @@
+/* Lumière et ombre neutres : les thèmes ne définissent que des teintes de
+   surface, or un reflet ou une ombre doivent rester clairs ou sombres quel que
+   soit le thème, y compris le thème clair. */
+:root { --glint: #ffffff; --shade: #000000; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body, #root { width: 100%; height: 100%; overflow: hidden; font-family: var(--font-main); background: transparent; color: var(--text-primary); user-select: none; }
 ::-webkit-scrollbar { width: 4px; }

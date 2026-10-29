@@ -9,6 +9,8 @@ export interface Track {
   beatmapSet?: string;
   coverPath?: string;
   backgroundPath?: string;
+  videoPath?: string;
+  videoOffsetMs?: number;
 }
 
 export interface Playlist {
