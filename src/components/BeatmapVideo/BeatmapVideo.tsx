@@ -1,7 +1,7 @@
 // src/components/BeatmapVideo/BeatmapVideo.tsx
-import { useEffect, useRef } from 'react';
-import { convertFileSrc } from '@tauri-apps/api/core';
+import { useEffect, useRef, useState } from 'react';
 import { usePlayerStore } from '@/stores/playerStore';
+import { openLocalMedia } from '@/lib/localMedia';
 import type { Track } from '@/types';
 
 // La position audio n'arrive que toutes les 500 ms et la vidéo avance d'elle-même
@@ -22,7 +22,7 @@ interface Props {
 }
 
 /**
- * Vidéo de la beatmap, muette, calée sur la musique : c'est Howler qui joue le
+ * Vidéo de la beatmap, muette, calée sur la musique : c'est useAudio qui joue le
  * son, la vidéo ne fait que suivre sa position.
  */
 export function BeatmapVideo({ track, className, onUnavailable }: Props) {
@@ -30,6 +30,18 @@ export function BeatmapVideo({ track, className, onUnavailable }: Props) {
   const status = usePlayerStore((s) => s.status);
   const audioTime = usePlayerStore((s) => s.audioTime);
   const offsetSecs = (track.videoOffsetMs ?? 0) / 1000;
+  const [src, setSrc] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    let release: (() => void) | undefined;
+    openLocalMedia(track.videoPath).then((media) => {
+      if (cancelled) { media.release(); return; }
+      release = media.release;
+      setSrc(media.url);
+    }, () => { if (!cancelled) onUnavailable(); });
+    return () => { cancelled = true; release?.(); };
+  }, [track.videoPath]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -53,13 +65,13 @@ export function BeatmapVideo({ track, className, onUnavailable }: Props) {
     } else if (status !== 'playing' && !video.paused) {
       video.pause();
     }
-  }, [audioTime, status, offsetSecs]);
+  }, [audioTime, status, offsetSecs, src]);
 
   return (
     <video
       ref={videoRef}
       className={className}
-      src={convertFileSrc(track.videoPath)}
+      src={src ?? undefined}
       muted
       playsInline
       preload="auto"
