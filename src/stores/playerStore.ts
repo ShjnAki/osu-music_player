@@ -74,6 +74,24 @@ export function filterTracks(
   return result;
 }
 
+function visibleTracks(s: PlayerState): Track[] {
+  const playlist = s.playlists.find(p => p.id === s.activePlaylistId);
+  return filterTracks(s.tracks, s.searchQuery, s.bpmFilter, s.favoritesOnly, s.favoriteIds, playlist?.trackIds ?? null);
+}
+
+/**
+ * Piste que « suivant » jouera hors lecture aléatoire, ou null si aucune.
+ * Partagée avec le préchargement, qui doit prédire exactement le même choix.
+ */
+export function predictNextTrack(s: PlayerState): Track | null {
+  if (s.isShuffled) return null;
+  const visible = visibleTracks(s);
+  if (!visible.length) return null;
+  const idx = visible.findIndex((t) => t.id === s.currentTrack?.id);
+  if (idx + 1 < visible.length) return visible[idx + 1];
+  return s.repeatMode === 'all' ? visible[0] : null;
+}
+
 export const usePlayerStore = create<PlayerState>()(
   persist(
     (set, get) => ({
@@ -135,17 +153,12 @@ export const usePlayerStore = create<PlayerState>()(
       toggleSphereMode: () => set((s) => ({ isSphereMode: !s.isSphereMode })),
 
       nextTrack: () => {
-        const { currentTrack, tracks, searchQuery, bpmFilter, favoritesOnly, favoriteIds, playlists, activePlaylistId, isShuffled, repeatMode } = get();
-        const playlist = playlists.find(p => p.id === activePlaylistId);
-        const visible = filterTracks(tracks, searchQuery, bpmFilter, favoritesOnly, favoriteIds, playlist?.trackIds ?? null);
-        if (!visible.length) return;
-        const idx = visible.findIndex((t) => t.id === currentTrack?.id);
-        let nextIdx = isShuffled
-          ? Math.floor(Math.random() * visible.length)
-          : idx + 1 >= visible.length
-          ? repeatMode === 'all' ? 0 : -1
-          : idx + 1;
-        if (nextIdx >= 0) set({ currentTrack: visible[nextIdx], progress: 0, audioTime: 0, status: 'loading' });
+        const state = get();
+        const visible = visibleTracks(state);
+        const next = state.isShuffled
+          ? visible[Math.floor(Math.random() * visible.length)]
+          : predictNextTrack(state);
+        if (next) set({ currentTrack: next, progress: 0, audioTime: 0, status: 'loading' });
       },
 
       prevTrack: () => {
