@@ -1,7 +1,7 @@
 // src/components/BeatmapVideo/BeatmapVideo.tsx
 import { useEffect, useRef, useState } from 'react';
 import { usePlayerStore } from '@/stores/playerStore';
-import { openLocalMedia } from '@/lib/localMedia';
+import { localMediaUrl } from '@/lib/localMedia';
 import type { Track } from '@/types';
 
 // La position audio n'arrive que toutes les 500 ms et la vidéo avance d'elle-même
@@ -34,13 +34,11 @@ export function BeatmapVideo({ track, className, onUnavailable }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    let release: (() => void) | undefined;
-    openLocalMedia(track.videoPath).then((media) => {
-      if (cancelled) { media.release(); return; }
-      release = media.release;
-      setSrc(media.url);
-    }, () => { if (!cancelled) onUnavailable(); });
-    return () => { cancelled = true; release?.(); };
+    localMediaUrl(track.videoPath).then(
+      (url) => { if (!cancelled) setSrc(url); },
+      () => { if (!cancelled) onUnavailable(); },
+    );
+    return () => { cancelled = true; };
   }, [track.videoPath]);
 
   useEffect(() => {

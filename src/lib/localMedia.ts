@@ -1,23 +1,13 @@
 // src/lib/localMedia.ts
-import { convertFileSrc } from '@tauri-apps/api/core';
+import { convertFileSrc, invoke } from '@tauri-apps/api/core';
 
-// WebKitGTK refuse de lire un <audio> ou <video> dont la source est asset://
-// (MEDIA_ERR_SRC_NOT_SUPPORTED), alors qu'il en lit très bien le contenu par
-// fetch : sous Linux, le média passe donc par un blob en mémoire. WebView2
-// (Windows) et WKWebView (macOS) lisent asset:// directement, en flux.
-const NEEDS_BLOB = /Linux/.test(navigator.userAgent) && !/Android/.test(navigator.userAgent);
+// Sous Linux, le Rust sert les médias en HTTP local (voir media_server.rs) :
+// WebKitGTK ne lit pas un média servi par asset://, et lit de travers certains
+// mp3 chargés en blob. Ailleurs, la commande renvoie null et asset:// suffit.
+let mediaBaseUrl: Promise<string | null> | null = null;
 
-export interface LocalMedia {
-  url: string;
-  /** Libère le blob éventuel : sans ça, chaque piste jouée resterait en mémoire. */
-  release: () => void;
-}
-
-export async function openLocalMedia(path: string): Promise<LocalMedia> {
-  const url = convertFileSrc(path);
-  if (!NEEDS_BLOB) return { url, release: () => {} };
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`${response.status} ${path}`);
-  const objectUrl = URL.createObjectURL(await response.blob());
-  return { url: objectUrl, release: () => URL.revokeObjectURL(objectUrl) };
+export async function localMediaUrl(path: string): Promise<string> {
+  mediaBaseUrl ??= invoke<string | null>('media_base_url').catch(() => null);
+  const base = await mediaBaseUrl;
+  return base ? `${base}/${encodeURIComponent(path)}` : convertFileSrc(path);
 }

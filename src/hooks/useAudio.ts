@@ -1,26 +1,25 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { usePlayerStore, predictNextTrack } from '@/stores/playerStore';
-import { openLocalMedia } from '@/lib/localMedia';
+import { localMediaUrl } from '@/lib/localMedia';
 
 // Laisse la piste courante finir de démarrer avant d'ouvrir la suivante, pour
 // que les deux lectures disque ne se concurrencent pas.
 const PRELOAD_DELAY_MS = 1000;
 
 // Un <audio> natif plutôt que Howler : en mode html5, Howler fige la durée au
-// premier « prêt » et programme la fin de piste par minuterie. Or WebKitGTK
-// annonce d'abord une durée nulle pour un blob : Howler concluait la piste
-// finie dès le départ et passait à la suivante. L'évènement `ended` du
-// navigateur ne dépend pas de cette estimation.
+// premier « prêt » et programme la fin de piste par minuterie. Si la webview
+// annonce d'abord une durée nulle, comme WebKitGTK pour un blob, Howler
+// conclut la piste finie dès le départ et passe à la suivante. L'évènement
+// `ended` du navigateur ne dépend pas de cette estimation.
 interface OpenTrack {
   audio: HTMLAudioElement;
   release: () => void;
 }
 
 async function openTrack(path: string): Promise<OpenTrack> {
-  const media = await openLocalMedia(path);
   const audio = new Audio();
   audio.preload = 'auto';
-  audio.src = media.url;
+  audio.src = await localMediaUrl(path);
   return {
     audio,
     release: () => {
@@ -28,7 +27,6 @@ async function openTrack(path: string): Promise<OpenTrack> {
       // Sans ça, l'élément garde le fichier ouvert jusqu'au ramasse-miettes.
       audio.removeAttribute('src');
       audio.load();
-      media.release();
     },
   };
 }
@@ -83,17 +81,17 @@ export function useAudio() {
     cleanup();
     setStatus('loading');
 
-    // L'ouverture est asynchrone (blob sous Linux) : une piste changée entre-temps
-    // ne doit ni jouer ni rester en mémoire.
+    // L'ouverture est asynchrone (adresse du serveur média sous Linux) : une
+    // piste changée entre-temps ne doit ni jouer ni rester ouverte.
     let cancelled = false;
     // Détachés avant la libération : la pause qu'elle provoque ne doit pas
     // repasser la nouvelle piste, en chargement, à l'état « en pause ».
-    let listeners = new AbortController();
+    const listeners = new AbortController();
+    const { signal } = listeners;
     let tick: ReturnType<typeof setInterval> | undefined;
     let preloadTimer: ReturnType<typeof setTimeout> | undefined;
 
-    const path = currentTrack.path;
-    const adopt = (track: OpenTrack, retriesLeft: number) => {
+    const adopt = (track: OpenTrack) => {
       if (cancelled) { track.release(); return; }
       const { audio } = track;
       audioRef.current = audio;
@@ -101,27 +99,12 @@ export function useAudio() {
 
       const { isMuted: muted, volume: vol } = usePlayerStore.getState();
       audio.volume = muted ? 0 : vol;
-      // WebKitGTK refuse parfois un blob audio avant même de l'ouvrir
-      // (code 4, readyState 0), puis le relit sans souci : on rouvre une fois
-      // avec un blob et un élément neufs plutôt que de laisser la piste muette.
-      const onError = () => {
-        if (retriesLeft > 0 && audio.readyState === HTMLMediaElement.HAVE_NOTHING) {
-          listeners.abort();
-          clearInterval(tick);
-          clearTimeout(preloadTimer);
-          cleanup();
-          listeners = new AbortController();
-          openTrack(path).then((fresh) => adopt(fresh, retriesLeft - 1), () => { if (!cancelled) setStatus('error'); });
-        } else {
-          setStatus('error');
-        }
-      };
-      audio.addEventListener('ended', () => nextTrack(), { signal: listeners.signal });
-      audio.addEventListener('error', onError, { signal: listeners.signal });
-      audio.addEventListener('play', () => setStatus('playing'), { signal: listeners.signal });
-      audio.addEventListener('pause', () => { if (!audio.ended) setStatus('paused'); }, { signal: listeners.signal });
+      audio.addEventListener('ended', () => nextTrack(), { signal });
+      audio.addEventListener('error', () => setStatus('error'), { signal });
+      audio.addEventListener('play', () => setStatus('playing'), { signal });
+      audio.addEventListener('pause', () => { if (!audio.ended) setStatus('paused'); }, { signal });
       // Une piste préchargée en erreur avant d'être adoptée.
-      if (audio.error) { onError(); return; }
+      if (audio.error) { setStatus('error'); return; }
 
       const start = () => {
         // Rejet attendu si la piste est quittée avant de démarrer (AbortError) ;
@@ -130,7 +113,7 @@ export function useAudio() {
         preloadTimer = setTimeout(preloadNextTrack, PRELOAD_DELAY_MS);
       };
       // Une piste préchargée peut être prête avant même d'être adoptée.
-      if (isPlayable(audio)) start(); else audio.addEventListener('canplay', start, { once: true, signal: listeners.signal });
+      if (isPlayable(audio)) start(); else audio.addEventListener('canplay', start, { once: true, signal });
 
       tick = setInterval(() => {
         if (!audio.paused && audio.duration > 0) {
@@ -144,8 +127,8 @@ export function useAudio() {
       }, 500);
     };
 
-    (takePreloaded(currentTrack.id) ?? openTrack(path)).then(
-      (track) => adopt(track, 1),
+    (takePreloaded(currentTrack.id) ?? openTrack(currentTrack.path)).then(
+      adopt,
       () => { if (!cancelled) setStatus('error'); },
     );
 

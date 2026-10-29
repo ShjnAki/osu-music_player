@@ -1,5 +1,7 @@
 #![allow(unused_imports)]
 
+#[cfg(target_os = "linux")]
+mod media_server;
 mod osu_parse;
 
 use id3::TagLike;
@@ -453,18 +455,49 @@ async fn set_sphere_mode(app: tauri::AppHandle, enabled: bool) -> Result<(), Str
     Ok(())
 }
 
+/// Adresse du serveur média local, ou rien hors Linux, où asset:// suffit.
+struct MediaBaseUrl(Option<String>);
+
+#[tauri::command]
+fn media_base_url(state: tauri::State<'_, MediaBaseUrl>) -> Option<String> {
+    state.0.clone()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
+        .setup(|app| {
+            use tauri::Manager;
+            #[cfg(target_os = "linux")]
+            let base_url = {
+                let handle = app.handle().clone();
+                // Même liste d'autorisation que le protocole asset : le dossier
+                // Songs y est ajouté au chargement du cache ou au scan.
+                match media_server::MediaServer::start(move |path| {
+                    handle.asset_protocol_scope().is_allowed(path)
+                }) {
+                    Ok(server) => Some(server.base_url),
+                    Err(e) => {
+                        eprintln!("serveur média : {e}");
+                        None
+                    }
+                }
+            };
+            #[cfg(not(target_os = "linux"))]
+            let base_url = None;
+            app.manage(MediaBaseUrl(base_url));
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             scan_osu_songs,
             default_songs_folder,
             load_tracks_cache,
             save_tracks_cache,
             set_sphere_mode,
+            media_base_url,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

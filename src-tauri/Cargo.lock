@@ -2157,6 +2157,7 @@ name = "osu-player"
 version = "0.2.0"
 dependencies = [
  "id3",
+ "percent-encoding",
  "serde",
  "serde_json",
  "tauri",
