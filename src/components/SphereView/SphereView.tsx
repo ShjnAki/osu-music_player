@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type MouseEvent } from 'react';
 import { usePlayerStore } from '@/stores/playerStore';
 import { convertFileSrc } from '@tauri-apps/api/core';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
 import { BeatmapVideo, hasVideo } from '@/components/BeatmapVideo/BeatmapVideo';
 import type { Track } from '@/types';
@@ -9,6 +10,21 @@ import './SphereView.css';
 // Doit égaler la hauteur rendue de .sphere-track : la virtualisation calcule
 // les positions sans mesurer le DOM.
 const SPHERE_TRACK_HEIGHT = 36;
+
+// Ce qui garde son clic ; tout le reste de la sphère sert de poignée.
+const INTERACTIVE = 'button, input, .sphere-track';
+
+/**
+ * Déplace la fenêtre depuis n'importe quel point libre de la sphère.
+ * L'attribut data-tauri-drag-region ne réagit qu'à l'élément cliqué
+ * lui-même : posé sur la sphère, toujours recouverte par le fond et le voile,
+ * il ne servait jamais — et un double-clic y aurait agrandi la fenêtre.
+ */
+function startWindowDrag(e: MouseEvent) {
+  if (e.button !== 0 || (e.target as Element).closest(INTERACTIVE)) return;
+  e.preventDefault();
+  getCurrentWindow().startDragging().catch(() => {});
+}
 
 interface Props {
   onToggle: () => void;
@@ -50,7 +66,7 @@ export function SphereView({ onToggle, onSeek }: Props) {
   const elapsed = currentTrack?.duration ? progress * currentTrack.duration : 0;
 
   return (
-    <div className={`sphere-view ${videoTrack ? 'has-video' : ''}`} data-tauri-drag-region>
+    <div className={`sphere-view ${videoTrack ? 'has-video' : ''}`} onMouseDown={startWindowDrag}>
       {videoTrack ? (
         <BeatmapVideo
           key={videoTrack.id}
