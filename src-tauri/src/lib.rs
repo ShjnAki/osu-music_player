@@ -252,8 +252,27 @@ fn read_osu_metadata(folder: &Path, duration_secs: Option<u64>) -> OsuMetadata {
     }
 }
 
+/// Ouvre la portée du protocole asset au dossier Songs choisi.
+///
+/// La portée statique de la config ne peut pas deviner où sont les beatmaps :
+/// un autre disque (S:\ sous Windows), un point de montage arbitraire, ou un
+/// préfixe Wine caché (`~/.wine`), que les motifs glob excluent par défaut
+/// sous Unix. Les pistes s'affichaient, lues par le scan Rust, mais la webview
+/// se voyait refuser les fichiers : ni son, ni fond, ni vidéo.
+fn allow_songs_folder(app: &tauri::AppHandle, folder_path: &str) {
+    use tauri::Manager;
+    if let Err(e) = app.asset_protocol_scope().allow_directory(folder_path, true) {
+        eprintln!("asset scope: {folder_path}: {e}");
+    }
+}
+
 #[tauri::command(async)]
-fn scan_osu_songs(folder_path: String) -> Result<Vec<Track>, String> {
+fn scan_osu_songs(app: tauri::AppHandle, folder_path: String) -> Result<Vec<Track>, String> {
+    allow_songs_folder(&app, &folder_path);
+    scan_songs_folder(&folder_path)
+}
+
+fn scan_songs_folder(folder_path: &str) -> Result<Vec<Track>, String> {
     let mut tracks: Vec<Track> = Vec::new();
 
     if !Path::new(&folder_path).exists() {
@@ -382,7 +401,9 @@ fn folder_mtime(folder_path: &str) -> u64 {
 }
 
 #[tauri::command(async)]
-fn load_tracks_cache(cache_path: String, folder_path: String) -> Option<Vec<Track>> {
+fn load_tracks_cache(app: tauri::AppHandle, cache_path: String, folder_path: String) -> Option<Vec<Track>> {
+    // Même avec un cache valide, sans scan : la portée doit couvrir le dossier.
+    allow_songs_folder(&app, &folder_path);
     let content = std::fs::read_to_string(&cache_path).ok()?;
     let cache: TracksCache = serde_json::from_str(&content).ok()?;
     let current_mtime = folder_mtime(&folder_path);
