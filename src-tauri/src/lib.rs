@@ -445,10 +445,22 @@ fn window_size(sphere_mode: bool) -> tauri::LogicalSize<f64> {
     }
 }
 
+/// Taille minimale du mode normal, celle de `tauri.conf.json`.
+fn normal_min_size() -> tauri::LogicalSize<f64> {
+    tauri::LogicalSize { width: 320.0, height: 480.0 }
+}
+
 #[tauri::command]
 async fn set_sphere_mode(app: tauri::AppHandle, enabled: bool) -> Result<(), String> {
     use tauri::Manager;
     let win = app.get_webview_window("main").ok_or("window not found")?;
+    // Le minimum de la config (480 px de haut) s'imposait aussi à la sphère :
+    // la fenêtre restait haute de 480 px, et la bande vide sous le cercle
+    // captait les clics destinés aux fenêtres derrière. Une sphère ne se
+    // redimensionne pas non plus : l'attraper près du bord l'étirait.
+    let min_size = (!enabled).then(|| tauri::Size::Logical(normal_min_size()));
+    win.set_min_size(min_size).map_err(|e| e.to_string())?;
+    win.set_resizable(!enabled).map_err(|e| e.to_string())?;
     win.set_size(tauri::Size::Logical(window_size(enabled)))
         .map_err(|e| e.to_string())?;
     win.set_always_on_top(enabled).map_err(|e| e.to_string())?;
@@ -636,6 +648,16 @@ mod tests {
         let size = window_size(false);
         assert_eq!(Some(size.width), window["width"].as_f64());
         assert_eq!(Some(size.height), window["height"].as_f64());
+    }
+
+    #[test]
+    fn taille_minimale_retablie_identique_a_la_config() {
+        let conf: serde_json::Value =
+            serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
+        let window = &conf["app"]["windows"][0];
+        let size = normal_min_size();
+        assert_eq!(Some(size.width), window["minWidth"].as_f64());
+        assert_eq!(Some(size.height), window["minHeight"].as_f64());
     }
 
     #[test]
