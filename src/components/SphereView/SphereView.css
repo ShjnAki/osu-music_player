@@ -31,7 +31,10 @@
   z-index: 1;
 }
 
-.sphere-view > *:not(.sphere-bg):not(.sphere-bg-overlay) {
+/* :where() ramène la spécificité à celle d'une classe : sans ça, cette règle
+   écrasait le position: absolute de .sphere-now-playing, qui retombait dans le
+   flux et chevauchait la barre de progression. */
+.sphere-view > :where(:not(.sphere-bg):not(.sphere-bg-overlay)) {
   position: relative;
   z-index: 2;
 }
@@ -41,7 +44,10 @@
   flex: 1;
   width: 100%;
   overflow-y: auto;
-  padding: 48px 20px 0;
+  /* Marge et non padding : un padding défile avec les lignes, qui remontaient
+     alors sous le titre et dans le haut du cercle, trop étroit pour elles. */
+  margin-top: 78px;
+  padding: 0 40px;
   scrollbar-width: none;
 }
 .sphere-list::-webkit-scrollbar { display: none; }
@@ -86,11 +92,13 @@
 /* Now playing overlay at the top */
 .sphere-now-playing {
   position: absolute;
-  top: 14px;
+  /* À 14px du haut, la corde du cercle ne mesure que ~140px : le titre était
+     rogné. À 30px elle dépasse 200px. */
+  top: 30px;
   left: 50%;
   transform: translateX(-50%);
   text-align: center;
-  width: 220px;
+  width: 200px;
   pointer-events: none;
   z-index: 3;
 }
@@ -118,6 +126,7 @@
   align-items: center;
   gap: 6px;
   width: 240px;
+  padding-top: 6px;
   padding-bottom: 4px;
 }
 .sphere-time {
@@ -154,7 +163,7 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding-bottom: 22px;
+  padding-bottom: 24px;
 }
 .sphere-btn {
   width: 32px;
