@@ -27,7 +27,9 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # Node 20 est en fin de vie : il n'a pas reçu les correctifs de sécurité
+          # d'octobre 2026 (corrigés dans 22.23.4 et plus).
+          node-version: 22
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
