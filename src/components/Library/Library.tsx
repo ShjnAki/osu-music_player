@@ -12,7 +12,7 @@ type Tab = 'all' | 'favorites' | 'playlists';
 
 export function Library() {
   const {
-    tracks, searchQuery, bpmFilter, favoriteIds,
+    tracks, searchQuery, bpmFilter, favoriteIds, isScanning,
     playlists, activePlaylistId,
     currentTrack, setSearchQuery, setCurrentTrack,
     setBpmFilter, toggleFavorite,
@@ -157,7 +157,14 @@ export function Library() {
       <div className="library-list" ref={containerRef}>
         {filtered.length === 0 ? (
           <div className="library-empty">
-            {tracks.length === 0 ? (
+            {tracks.length === 0 && isScanning ? (
+              // Un premier scan peut durer : sans ce message, la liste vide
+              // invitait à relancer un scan déjà en cours.
+              <>
+                <p>Scanning your osu! folder…</p>
+                <small>This can take a while the first time</small>
+              </>
+            ) : tracks.length === 0 ? (
               <>
                 <p>No tracks found</p>
                 <small>Go to ⚙ Settings to scan your osu! folder</small>

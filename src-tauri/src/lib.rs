@@ -160,7 +160,10 @@ fn wsl_mounts() -> Vec<PathBuf> {
 
 /// Premier emplacement osu! existant, ou une chaîne vide si aucun n'est trouvé —
 /// le front ouvre alors le sélecteur de dossier.
-#[tauri::command]
+// `async` partout où le disque est touché : une commande Tauri synchrone tourne
+// sur le fil principal, qui gère aussi la fenêtre. Pendant un scan, celle-ci
+// ne recevait plus ni clics ni curseur.
+#[tauri::command(async)]
 fn default_songs_folder() -> String {
     let local_app_data = std::env::var("LOCALAPPDATA").ok();
     let home = std::env::var("HOME").unwrap_or_default();
@@ -249,7 +252,7 @@ fn read_osu_metadata(folder: &Path, duration_secs: Option<u64>) -> OsuMetadata {
     }
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 fn scan_osu_songs(folder_path: String) -> Result<Vec<Track>, String> {
     let mut tracks: Vec<Track> = Vec::new();
 
@@ -378,7 +381,7 @@ fn folder_mtime(folder_path: &str) -> u64 {
         .unwrap_or(0)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 fn load_tracks_cache(cache_path: String, folder_path: String) -> Option<Vec<Track>> {
     let content = std::fs::read_to_string(&cache_path).ok()?;
     let cache: TracksCache = serde_json::from_str(&content).ok()?;
@@ -390,7 +393,7 @@ fn load_tracks_cache(cache_path: String, folder_path: String) -> Option<Vec<Trac
     }
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 fn save_tracks_cache(cache_path: String, folder_path: String, tracks: Vec<Track>) -> Result<(), String> {
     let cache = TracksCache {
         version: CACHE_VERSION,
