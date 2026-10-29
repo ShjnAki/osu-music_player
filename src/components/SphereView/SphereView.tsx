@@ -1,8 +1,13 @@
 import { useMemo } from 'react';
 import { usePlayerStore } from '@/stores/playerStore';
 import { convertFileSrc } from '@tauri-apps/api/core';
+import { useVirtualRows } from '@/hooks/useVirtualRows';
 import type { Track } from '@/types';
 import './SphereView.css';
+
+// Doit égaler la hauteur rendue de .sphere-track : la virtualisation calcule
+// les positions sans mesurer le DOM.
+const SPHERE_TRACK_HEIGHT = 36;
 
 interface Props {
   onToggle: () => void;
@@ -23,6 +28,9 @@ export function SphereView({ onToggle, onSeek }: Props) {
     ) : tracks;
   }, [tracks, searchQuery]);
 
+  const { containerRef, start, end, totalHeight, offsetTop } =
+    useVirtualRows<HTMLDivElement>(filtered.length, SPHERE_TRACK_HEIGHT);
+
   const isPlaying = status === 'playing';
   const bgRaw = currentTrack?.backgroundPath ?? currentTrack?.coverPath ?? null;
   const bgUrl = bgRaw ? convertFileSrc(bgRaw) : null;
@@ -42,22 +50,27 @@ export function SphereView({ onToggle, onSeek }: Props) {
       <div className="sphere-bg-overlay" />
 
       {/* Track list */}
-      <div className="sphere-list" data-tauri-drag-region="false">
-        {filtered.map((track: Track) => (
-          <div
-            key={track.id}
-            className={`sphere-track ${currentTrack?.id === track.id ? 'active' : ''}`}
-            onClick={() => setCurrentTrack(track)}
-          >
-            <span className="sphere-track-indicator">
-              {currentTrack?.id === track.id ? '▶' : ''}
-            </span>
-            <div className="sphere-track-info">
-              <div className="sphere-track-title">{track.title}</div>
-              <div className="sphere-track-artist">{track.artist}</div>
-            </div>
+      <div className="sphere-list" data-tauri-drag-region="false" ref={containerRef}>
+        <div style={{ height: totalHeight, position: 'relative' }}>
+          <div style={{ transform: `translateY(${offsetTop}px)` }}>
+            {filtered.slice(start, end).map((track: Track) => (
+              <div
+                key={track.id}
+                className={`sphere-track ${currentTrack?.id === track.id ? 'active' : ''}`}
+                style={{ height: SPHERE_TRACK_HEIGHT }}
+                onClick={() => setCurrentTrack(track)}
+              >
+                <span className="sphere-track-indicator">
+                  {currentTrack?.id === track.id ? '▶' : ''}
+                </span>
+                <div className="sphere-track-info">
+                  <div className="sphere-track-title">{track.title}</div>
+                  <div className="sphere-track-artist">{track.artist}</div>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
+        </div>
       </div>
 
       {/* Current track overlay */}
