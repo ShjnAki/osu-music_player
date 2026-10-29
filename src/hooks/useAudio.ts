@@ -6,7 +6,7 @@ import { usePlayerStore } from '@/stores/playerStore';
 export function useAudio() {
   const howlRef = useRef<Howl | null>(null);
   const progressRef = useRef<number>(0);
-  const { currentTrack, volume, isMuted, setStatus, setProgress, nextTrack } = usePlayerStore();
+  const { currentTrack, volume, isMuted, setStatus, setPlayback, nextTrack } = usePlayerStore();
 
   const cleanup = useCallback(() => {
     if (howlRef.current) {
@@ -42,7 +42,7 @@ export function useAudio() {
         const p = seek / dur;
         if (Math.abs(p - progressRef.current) > 0.001) {
           progressRef.current = p;
-          setProgress(p);
+          setPlayback(p, seek);
         }
       }
     }, 500);
@@ -61,7 +61,7 @@ export function useAudio() {
     if (!howlRef.current) return;
     const dur = howlRef.current.duration() || 0;
     howlRef.current.seek(ratio * dur);
-    setProgress(ratio);
+    setPlayback(ratio, ratio * dur);
   }, []);
   const toggle = useCallback(() => {
     if (!howlRef.current) return;

@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { usePlayerStore } from '@/stores/playerStore';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
+import { BeatmapVideo, hasVideo } from '@/components/BeatmapVideo/BeatmapVideo';
 import type { Track } from '@/types';
 import './SphereView.css';
 
@@ -35,6 +36,12 @@ export function SphereView({ onToggle, onSeek }: Props) {
   const bgRaw = currentTrack?.backgroundPath ?? currentTrack?.coverPath ?? null;
   const bgUrl = bgRaw ? convertFileSrc(bgRaw) : null;
 
+  // Codec non pris en charge par la webview : on retombe sur l'image de fond.
+  const [failedVideo, setFailedVideo] = useState<string | null>(null);
+  const videoTrack = hasVideo(currentTrack) && currentTrack.videoPath !== failedVideo
+    ? currentTrack
+    : null;
+
   const formatTime = (secs?: number) => {
     if (!secs) return '0:00';
     const m = Math.floor(secs / 60), s = Math.floor(secs % 60);
@@ -43,8 +50,15 @@ export function SphereView({ onToggle, onSeek }: Props) {
   const elapsed = currentTrack?.duration ? progress * currentTrack.duration : 0;
 
   return (
-    <div className="sphere-view" data-tauri-drag-region>
-      {bgUrl && (
+    <div className={`sphere-view ${videoTrack ? 'has-video' : ''}`} data-tauri-drag-region>
+      {videoTrack ? (
+        <BeatmapVideo
+          key={videoTrack.id}
+          track={videoTrack}
+          className="sphere-video"
+          onUnavailable={() => setFailedVideo(videoTrack.videoPath)}
+        />
+      ) : bgUrl && (
         <div className="sphere-bg" style={{ backgroundImage: `url("${bgUrl}")` }} />
       )}
       <div className="sphere-bg-overlay" />

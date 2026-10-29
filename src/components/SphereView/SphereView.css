@@ -251,3 +251,29 @@
     inset 0 -2px 4px color-mix(in srgb, var(--shade) 25%, transparent);
 }
 .sphere-btn.play:hover { background: var(--accent-hover); }
+
+/* Placées après la règle :where() ci-dessus, qui sinon les remettrait dans le
+   flux. Nette et sans flou, comme dans la barre de lecture : recalculer le
+   flou à chaque image coûterait bien plus que sur l'image de fond. */
+.sphere-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+/* Voile allégé pour que la vidéo se voie ; le bord reste sombre, il porte
+   l'effet de volume et cerne les contrôles. */
+.sphere-view.has-video .sphere-bg-overlay {
+  background:
+    radial-gradient(circle at 50% 44%,
+      color-mix(in srgb, var(--bg-primary) 40%, transparent) 0%,
+      color-mix(in srgb, var(--bg-primary) 55%, transparent) 55%,
+      color-mix(in srgb, color-mix(in srgb, var(--bg-primary) 70%, var(--shade)) 85%, transparent) 100%);
+}
+.sphere-view.has-video .sphere-track-title,
+.sphere-view.has-video .sphere-title {
+  text-shadow: 0 1px 3px color-mix(in srgb, var(--bg-primary) 90%, transparent);
+}

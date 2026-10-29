@@ -15,6 +15,8 @@ interface PlayerState {
   currentTrack: Track | null;
   status: PlayerStatus;
   progress: number;
+  /** Position de lecture en secondes, pour caler la vidéo de la beatmap. */
+  audioTime: number;
   volume: number;
   isMuted: boolean;
   isShuffled: boolean;
@@ -39,6 +41,7 @@ interface PlayerState {
   setCurrentTrack: (track: Track | null) => void;
   setStatus: (status: PlayerStatus) => void;
   setProgress: (p: number) => void;
+  setPlayback: (progress: number, audioTime: number) => void;
   setVolume: (v: number) => void;
   toggleMute: () => void;
   toggleShuffle: () => void;
@@ -78,7 +81,7 @@ export const usePlayerStore = create<PlayerState>()(
       favoritesOnly: false, favoriteIds: new Set<string>(),
       playlists: [], activePlaylistId: null,
       songsFolder: '', isScanning: false,
-      currentTrack: null, status: 'idle', progress: 0,
+      currentTrack: null, status: 'idle', progress: 0, audioTime: 0,
       volume: 0.8, isMuted: false, isShuffled: false, repeatMode: 'none',
       currentTheme: null, showLibrary: true, showSettings: false, isSphereMode: false,
 
@@ -115,9 +118,11 @@ export const usePlayerStore = create<PlayerState>()(
       setActivePlaylist: (activePlaylistId) => set({ activePlaylistId }),
       setSongsFolder: (songsFolder) => set({ songsFolder }),
       setIsScanning: (isScanning) => set({ isScanning }),
-      setCurrentTrack: (currentTrack) => set({ currentTrack, progress: 0 }),
+      setCurrentTrack: (currentTrack) => set({ currentTrack, progress: 0, audioTime: 0 }),
       setStatus: (status) => set({ status }),
       setProgress: (progress) => set({ progress }),
+      // Une seule mise à jour pour les deux : chacune re-rend tous les abonnés.
+      setPlayback: (progress, audioTime) => set({ progress, audioTime }),
       setVolume: (volume) => set({ volume, isMuted: false }),
       toggleMute: () => set((s) => ({ isMuted: !s.isMuted })),
       toggleShuffle: () => set((s) => ({ isShuffled: !s.isShuffled })),
@@ -140,7 +145,7 @@ export const usePlayerStore = create<PlayerState>()(
           : idx + 1 >= visible.length
           ? repeatMode === 'all' ? 0 : -1
           : idx + 1;
-        if (nextIdx >= 0) set({ currentTrack: visible[nextIdx], progress: 0, status: 'loading' });
+        if (nextIdx >= 0) set({ currentTrack: visible[nextIdx], progress: 0, audioTime: 0, status: 'loading' });
       },
 
       prevTrack: () => {
@@ -148,10 +153,10 @@ export const usePlayerStore = create<PlayerState>()(
         const playlist = playlists.find(p => p.id === activePlaylistId);
         const visible = filterTracks(tracks, searchQuery, bpmFilter, favoritesOnly, favoriteIds, playlist?.trackIds ?? null);
         if (!visible.length) return;
-        if (progress > 0.05) { set({ progress: 0, status: 'loading' }); return; }
+        if (progress > 0.05) { set({ progress: 0, audioTime: 0, status: 'loading' }); return; }
         const idx = visible.findIndex((t) => t.id === currentTrack?.id);
         const prevIdx = idx > 0 ? idx - 1 : visible.length - 1;
-        set({ currentTrack: visible[prevIdx], progress: 0, status: 'loading' });
+        set({ currentTrack: visible[prevIdx], progress: 0, audioTime: 0, status: 'loading' });
       },
     }),
     {

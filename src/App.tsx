@@ -40,6 +40,8 @@ export default function App() {
     beatmapSet: t.beatmap_set,
     coverPath: t.cover_path,
     backgroundPath: t.background_path,
+    videoPath: t.video_path ?? undefined,
+    videoOffsetMs: t.video_offset_ms ?? undefined,
   });
 
   const getCachePath = async () => join(await appLocalDataDir(), 'tracks-cache.json');
