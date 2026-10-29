@@ -358,19 +358,27 @@ fn save_tracks_cache(cache_path: String, folder_path: String, tracks: Vec<Track>
     std::fs::write(&cache_path, json).map_err(|e| e.to_string())
 }
 
+/// Taille de la fenêtre selon le mode, en pixels logiques.
+///
+/// Logiques et non physiques : la sphère fait 360 px CSS, et sur un écran à
+/// 150 % une fenêtre de 360 px physiques n'en affiche que 240 — un quart de la
+/// sphère seulement. Le mode normal reprend la taille de `tauri.conf.json`, qui
+/// est elle aussi logique.
+fn window_size(sphere_mode: bool) -> tauri::LogicalSize<f64> {
+    if sphere_mode {
+        tauri::LogicalSize { width: 360.0, height: 360.0 }
+    } else {
+        tauri::LogicalSize { width: 380.0, height: 580.0 }
+    }
+}
+
 #[tauri::command]
 async fn set_sphere_mode(app: tauri::AppHandle, enabled: bool) -> Result<(), String> {
     use tauri::Manager;
     let win = app.get_webview_window("main").ok_or("window not found")?;
-    if enabled {
-        win.set_size(tauri::Size::Physical(tauri::PhysicalSize { width: 360, height: 360 }))
-            .map_err(|e| e.to_string())?;
-        win.set_always_on_top(true).map_err(|e| e.to_string())?;
-    } else {
-        win.set_size(tauri::Size::Physical(tauri::PhysicalSize { width: 380, height: 580 }))
-            .map_err(|e| e.to_string())?;
-        win.set_always_on_top(false).map_err(|e| e.to_string())?;
-    }
+    win.set_size(tauri::Size::Logical(window_size(enabled)))
+        .map_err(|e| e.to_string())?;
+    win.set_always_on_top(enabled).map_err(|e| e.to_string())?;
     Ok(())
 }
 
@@ -457,6 +465,22 @@ mod tests {
             candidates.contains(&"/mnt/s/osu!/Songs".to_string()),
             "candidats obtenus : {candidates:?}"
         );
+    }
+
+    #[test]
+    fn mode_sphere_fenetre_carree_a_la_taille_css_de_la_sphere() {
+        let size = window_size(true);
+        assert_eq!((size.width, size.height), (360.0, 360.0));
+    }
+
+    #[test]
+    fn mode_normal_restaure_la_taille_de_la_config() {
+        let conf: serde_json::Value =
+            serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
+        let window = &conf["app"]["windows"][0];
+        let size = window_size(false);
+        assert_eq!(Some(size.width), window["width"].as_f64());
+        assert_eq!(Some(size.height), window["height"].as_f64());
     }
 
     #[test]
