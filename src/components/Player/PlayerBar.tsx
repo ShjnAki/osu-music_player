@@ -3,6 +3,9 @@ import { convertFileSrc } from '@tauri-apps/api/core';
 import { BeatmapVideo, useVideoTrack } from '@/components/BeatmapVideo/BeatmapVideo';
 import { useAutoHide } from '@/hooks/useAutoHide';
 import { Visualizer } from '@/components/Visualizer/Visualizer';
+import {
+  MenuIcon, NextIcon, PauseIcon, PlayIcon, PreviousIcon, RepeatIcon, SettingsIcon, ShuffleIcon, VolumeIcon,
+} from '@/components/Icons/Icons';
 import './PlayerBar.css';
 
 interface Props {
@@ -103,24 +106,24 @@ export function PlayerBar({ onToggle, onSeek, onPrevious, showVisual }: Props) {
 
       {/* Controls */}
       <div className="player-controls">
-        <button className={`ctrl-btn ${isShuffled ? 'active' : ''}`} onClick={toggleShuffle} title="Shuffle">⇄</button>
-        <button className="ctrl-btn" onClick={onPrevious} title="Previous">⏮</button>
-        <button className={`ctrl-btn play-btn`} onClick={onToggle}>
+        <button className={`ctrl-btn ${isShuffled ? 'active' : ''}`} onClick={toggleShuffle} title="Shuffle"><ShuffleIcon /></button>
+        <button className="ctrl-btn" onClick={onPrevious} title="Previous"><PreviousIcon /></button>
+        <button className={`ctrl-btn play-btn`} onClick={onToggle} aria-label={isPlaying ? 'Pause' : 'Play'}>
           {status === 'loading'
             ? <span style={{ animation: 'spin 1s linear infinite', display: 'inline-block' }}>◌</span>
-            : isPlaying ? '⏸' : '▶'}
+            : isPlaying ? <PauseIcon /> : <PlayIcon />}
         </button>
-        <button className="ctrl-btn" onClick={nextTrack} title="Next">⏭</button>
-        <button className={`ctrl-btn ${repeatMode !== 'none' ? 'active' : ''}`} onClick={cycleRepeat}>
-          {repeatMode === 'one' ? '🔂' : '🔁'}
+        <button className="ctrl-btn" onClick={nextTrack} title="Next"><NextIcon /></button>
+        <button className={`ctrl-btn ${repeatMode !== 'none' ? 'active' : ''}`} onClick={cycleRepeat} aria-label="Repeat">
+          <RepeatIcon one={repeatMode === 'one'} />
         </button>
       </div>
 
       {/* Volume + nav */}
       <div className="player-extras">
         <div className="player-volume">
-          <button className="ctrl-btn sm" onClick={toggleMute}>
-            {isMuted || volume === 0 ? '🔇' : volume < 0.5 ? '🔉' : '🔊'}
+          <button className="ctrl-btn sm" onClick={toggleMute} aria-label="Mute">
+            <VolumeIcon level={isMuted || volume === 0 ? 'muted' : volume < 0.5 ? 'low' : 'high'} />
           </button>
           <input
             type="range" min={0} max={1} step={0.01}
@@ -130,8 +133,8 @@ export function PlayerBar({ onToggle, onSeek, onPrevious, showVisual }: Props) {
           />
         </div>
         <div className="player-nav-btns">
-          <button className={`nav-btn ${showLibrary ? 'active' : ''}`} onClick={() => setShowLibrary(!showLibrary)}>☰</button>
-          <button className={`nav-btn ${showSettings ? 'active' : ''}`} onClick={() => setShowSettings(!showSettings)}>⚙</button>
+          <button className={`nav-btn ${showLibrary ? 'active' : ''}`} onClick={() => setShowLibrary(!showLibrary)} aria-label="Library"><MenuIcon /></button>
+          <button className={`nav-btn ${showSettings ? 'active' : ''}`} onClick={() => setShowSettings(!showSettings)} aria-label="Settings"><SettingsIcon /></button>
         </div>
       </div>
     </div>

@@ -228,7 +228,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-secondary);
+  /* Couleur principale du texte : la secondaire se perdait sur l'image de fond
+     voilée. */
+  color: var(--text-primary);
   background: none;
   border: none;
   cursor: pointer;
@@ -245,7 +247,9 @@
   background:
     radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--glint) 35%, transparent), transparent 60%),
     var(--accent);
-  color: var(--glint);
+  /* Le fond sombre du thème plutôt que du blanc, illisible sur un accent pâle
+     comme celui de Sakura. */
+  color: var(--bg-primary);
   box-shadow:
     0 2px 10px color-mix(in srgb, var(--shade) 40%, transparent),
     inset 0 -2px 4px color-mix(in srgb, var(--shade) 25%, transparent);
@@ -276,6 +280,9 @@
 .sphere-view.has-video .sphere-track-title,
 .sphere-view.has-video .sphere-title {
   text-shadow: 0 1px 3px color-mix(in srgb, var(--bg-primary) 90%, transparent);
+}
+.sphere-view.has-video .sphere-btn:not(.play) .icon {
+  filter: drop-shadow(0 1px 2px color-mix(in srgb, var(--bg-primary) 90%, transparent));
 }
 
 /* Option « masquer les contrôles sur la vidéo » : sans activité (voir

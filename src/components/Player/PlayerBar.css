@@ -167,17 +167,22 @@
 
 /* Controls */
 .player-controls { display: flex; align-items: center; justify-content: center; gap: 8px; }
+/* Clairs quel que soit le thème : le voile de la barre est toujours sombre, et
+   la couleur de texte du thème clair y disparaissait. L'accent les teinte
+   juste assez pour rester dans le thème. */
 .ctrl-btn {
   font-size: 16px; width: 36px; height: 36px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  color: var(--text-secondary); transition: all 0.15s;
+  color: color-mix(in srgb, var(--glint) 80%, var(--accent)); transition: all 0.15s;
 }
-.ctrl-btn:hover { color: var(--text-primary); background: rgba(255,255,255,0.1); }
+.ctrl-btn:hover { color: var(--glint); background: rgba(255,255,255,0.1); }
 .ctrl-btn.active { color: var(--accent); }
 .ctrl-btn.sm { width: 28px; height: 28px; font-size: 14px; }
 .play-btn {
   width: 44px; height: 44px; font-size: 18px;
-  background: var(--accent) !important; color: white !important;
+  /* Le fond sombre du thème plutôt que du blanc, illisible sur un accent pâle
+     comme celui de Sakura. */
+  background: var(--accent) !important; color: var(--bg-primary) !important;
   box-shadow: 0 4px 16px rgba(0,0,0,0.4);
 }
 .play-btn:hover { background: var(--accent-hover) !important; transform: scale(1.05); }
@@ -190,7 +195,7 @@
 .nav-btn {
   font-size: 16px; width: 30px; height: 30px; border-radius: 8px;
   display: flex; align-items: center; justify-content: center;
-  color: var(--text-muted);
+  color: color-mix(in srgb, var(--glint) 80%, var(--accent));
 }
-.nav-btn:hover { color: var(--text-primary); background: rgba(255,255,255,0.1); }
+.nav-btn:hover { color: var(--glint); background: rgba(255,255,255,0.1); }
 .nav-btn.active { color: var(--accent); background: var(--accent-subtle); }
