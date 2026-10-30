@@ -26,10 +26,14 @@
 
 /* Search header */
 .library-header { padding: 10px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; background: var(--bg-secondary); }
-.library-search { display: flex; align-items: center; flex: 1; gap: 8px; background: var(--bg-tertiary); border-radius: 8px; padding: 6px 10px; border: 1px solid var(--border); }
+.library-search { display: flex; align-items: center; flex: 1; gap: 8px; background: var(--bg-tertiary); border-radius: 8px; padding: 6px 10px; border: 1px solid var(--border);
+  /* Sans min-width: 0, la largeur intrinsèque du champ (~20 caractères)
+     empêchait la recherche de rétrécir : à 380 px, le compteur de pistes
+     sortait de la fenêtre. */
+  min-width: 0; }
 .library-search:focus-within { border-color: var(--accent); }
 .search-icon { font-size: 13px; color: var(--text-muted); }
-.library-search input { flex: 1; font-size: 13px; color: var(--text-primary); }
+.library-search input { flex: 1; min-width: 0; font-size: 13px; color: var(--text-primary); }
 .library-search input::placeholder { color: var(--text-muted); }
 .search-clear { font-size: 16px; color: var(--text-muted); width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
 .search-clear:hover { color: var(--text-primary); background: rgba(255,255,255,0.1); }
