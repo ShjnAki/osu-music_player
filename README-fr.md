@@ -19,7 +19,9 @@ Tu préfères compiler toi-même ? Voir [Démarrage rapide](#démarrage-rapide).
 
 - 🎵 Lecture des fichiers MP3 et OGG de ton dossier osu! Songs, sur n'importe quel disque (`S:\` compris) et depuis WSL
 - 📋 Bibliothèque avec recherche (titre / artiste), filtre de BPM et filtre des pistes avec vidéo
-- ❤️ Favoris et playlists : ajoute des pistes, retire-les avec **×**
+- ❤️ Favoris et playlists : ajoute des pistes, retire-les avec **×**, ou importe tes collections osu!
+- 🧹 Doublons masqués : un seul exemplaire d'un morceau présent dans plusieurs beatmaps
+- ⏩ En option, chaque piste démarre au point d'aperçu de sa beatmap, comme dans le menu d'osu!
 - 🎨 4 thèmes intégrés (Dark, Glass, Sakura, Minimal), avec des contrôles dessinés en icônes, lisibles dans tous les thèmes
 - 🔀 Modes aléatoire et répétition (toute la liste, ou une seule piste) ; **Précédent** revient d'abord au début du morceau, comme sur la plupart des lecteurs
 - 🔊 Contrôle du volume
@@ -116,7 +118,7 @@ Clique sur l'épingle de la barre de titre, ou du coin haut gauche de la sphère
 
 Ouvre-les avec **⚙** dans la barre de lecture.
 
-- **Dossier Songs** — choisis ton dossier osu! `Songs` et scanne-le. Le scan est mis en cache, et refait seulement quand le contenu du dossier change.
+- **Dossier Songs** — choisis ton dossier osu! `Songs` et scanne-le. Le scan est mis en cache, et refait seulement quand le contenu du dossier change. *Hide duplicates* et *Start at the preview point* sont là aussi.
 - **Thèmes** — Dark, Glass, Sakura, Minimal.
 - **Videos** — *Hide controls while playing* : dans la sphère et la barre de lecture, les contrôles s'effacent après un moment sans bouger le pointeur, et reviennent dès qu'il bouge. *Visualizer for tracks without a video* : désactive-le pour voir l'image de fond à la place.
 

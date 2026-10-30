@@ -34,6 +34,10 @@ interface PlayerState {
   showVisualizer: boolean;
   /** Fenêtre épinglée au premier plan, dans les deux modes. */
   alwaysOnTop: boolean;
+  /** Un seul exemplaire d'un morceau présent dans plusieurs beatmaps. */
+  hideDuplicates: boolean;
+  /** Démarre les pistes à leur point d'aperçu, comme le menu d'osu!. */
+  startAtPreview: boolean;
 
   setTracks: (tracks: Track[]) => void;
   setSearchQuery: (q: string) => void;
@@ -41,6 +45,7 @@ interface PlayerState {
   setVideoOnly: (v: boolean) => void;
   toggleFavorite: (id: string) => void;
   createPlaylist: (name: string) => void;
+  importPlaylists: (imported: { name: string; trackIds: string[] }[]) => void;
   deletePlaylist: (id: string) => void;
   addToPlaylist: (playlistId: string, trackId: string) => void;
   removeFromPlaylist: (playlistId: string, trackId: string) => void;
@@ -62,6 +67,8 @@ interface PlayerState {
   setHideControlsOverVideo: (v: boolean) => void;
   setShowVisualizer: (v: boolean) => void;
   setAlwaysOnTop: (v: boolean) => void;
+  setHideDuplicates: (v: boolean) => void;
+  setStartAtPreview: (v: boolean) => void;
   nextTrack: () => void;
   prevTrack: () => void;
 }
@@ -74,6 +81,8 @@ export function filterTracks(
   favoriteIds: Set<string>,
   playlistTrackIds: string[] | null,
   videoOnly = false,
+  hideDuplicates = false,
+  keepId?: string,
 ): Track[] {
   let result = playlistTrackIds
     ? tracks.filter(t => playlistTrackIds.includes(t.id))
@@ -85,7 +94,39 @@ export function filterTracks(
     const q = query.toLowerCase();
     result = result.filter(t => t.title.toLowerCase().includes(q) || t.artist.toLowerCase().includes(q));
   }
-  return result;
+  // En dernier : parmi les copies qui passent les filtres (celle qui a une
+  // vidéo, avec le filtre Video), pas parmi toutes.
+  return hideDuplicates ? withoutDuplicates(result, keepId) : result;
+}
+
+// Au-delà, ce n'est plus le même enregistrement : version TV, extrait, autre
+// montage. En deçà, les mêmes fichiers diffèrent par leur silence de fin.
+const SAME_LENGTH_SECS = 2;
+
+const normalize = (s: string) => s.normalize('NFKC').toLowerCase().replace(/\s+/g, ' ').trim();
+
+/**
+ * Un exemplaire par morceau : même titre et même artiste, à la casse et aux
+ * espaces près, et même durée. Le même morceau revient souvent dans plusieurs
+ * beatmaps, une par mappeur. `keepId` (la piste en cours) est l'exemplaire
+ * gardé de son groupe, sans quoi la liste perdrait sa surbrillance et
+ * « suivant » son point de départ.
+ */
+export function withoutDuplicates(tracks: Track[], keepId?: string): Track[] {
+  const kept = new Map<string, Track[]>();
+  const keyOf = (t: Track) => `${normalize(t.title)}\u0000${normalize(t.artist)}`;
+  const sameLength = (a: Track, b: Track) =>
+    a.duration == null || b.duration == null || Math.abs(a.duration - b.duration) <= SAME_LENGTH_SECS;
+  const preferred = keepId ? tracks.find(t => t.id === keepId) : undefined;
+  if (preferred) kept.set(keyOf(preferred), [preferred]);
+  return tracks.filter((t) => {
+    if (t === preferred) return true;
+    const key = keyOf(t);
+    const group = kept.get(key);
+    if (group?.some(k => sameLength(k, t))) return false;
+    if (group) group.push(t); else kept.set(key, [t]);
+    return true;
+  });
 }
 
 /**
@@ -101,6 +142,7 @@ export function visibleTracks(s: PlayerState): Track[] {
     s.tracks, s.searchQuery, s.bpmFilter,
     s.libraryTab === 'favorites', s.favoriteIds,
     playlist?.trackIds ?? null, s.videoOnly,
+    s.hideDuplicates, s.currentTrack?.id,
   );
 }
 
@@ -130,6 +172,8 @@ export const usePlayerStore = create<PlayerState>()(
       hideControlsOverVideo: true,
       showVisualizer: true,
       alwaysOnTop: false,
+      hideDuplicates: true,
+      startAtPreview: false,
 
       setTracks: (tracks) => set({ tracks }),
       setSearchQuery: (searchQuery) => set({ searchQuery }),
@@ -143,6 +187,17 @@ export const usePlayerStore = create<PlayerState>()(
       createPlaylist: (name) => set((s) => ({
         playlists: [...s.playlists, { id: crypto.randomUUID(), name, trackIds: [] }],
       })),
+      // Une playlist du même nom est remplacée, pas doublée : réimporter après
+      // avoir modifié ses collections dans osu! les remet à jour.
+      importPlaylists: (imported) => set((s) => {
+        const playlists = [...s.playlists];
+        for (const { name, trackIds } of imported) {
+          const i = playlists.findIndex(p => p.name === name);
+          if (i >= 0) playlists[i] = { ...playlists[i], trackIds };
+          else playlists.push({ id: crypto.randomUUID(), name, trackIds });
+        }
+        return { playlists };
+      }),
       deletePlaylist: (id) => set((s) => ({
         playlists: s.playlists.filter(p => p.id !== id),
         activePlaylistId: s.activePlaylistId === id ? null : s.activePlaylistId,
@@ -182,6 +237,8 @@ export const usePlayerStore = create<PlayerState>()(
       setHideControlsOverVideo: (hideControlsOverVideo) => set({ hideControlsOverVideo }),
       setShowVisualizer: (showVisualizer) => set({ showVisualizer }),
       setAlwaysOnTop: (alwaysOnTop) => set({ alwaysOnTop }),
+      setHideDuplicates: (hideDuplicates) => set({ hideDuplicates }),
+      setStartAtPreview: (startAtPreview) => set({ startAtPreview }),
 
       nextTrack: () => {
         const state = get();
@@ -216,6 +273,8 @@ export const usePlayerStore = create<PlayerState>()(
         hideControlsOverVideo: s.hideControlsOverVideo,
         showVisualizer: s.showVisualizer,
         alwaysOnTop: s.alwaysOnTop,
+        hideDuplicates: s.hideDuplicates,
+        startAtPreview: s.startAtPreview,
       }),
       merge: (persisted: any, current) => ({
         ...current,

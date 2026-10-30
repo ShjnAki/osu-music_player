@@ -19,7 +19,9 @@ Want to build it yourself instead? See [Getting Started](#getting-started).
 
 - 🎵 Plays MP3 and OGG files from your osu! Songs folder, on any drive (`S:\` included) and through WSL
 - 📋 Library with search (title / artist), BPM range filter and a filter for tracks with a video
-- ❤️ Favorites and manual playlists: add tracks, remove them with **×**
+- ❤️ Favorites and manual playlists: add tracks, remove them with **×**, or import your osu! collections
+- 🧹 Duplicates hidden: one copy of a song found in several beatmap sets
+- ⏩ Optionally start each track at its beatmap's preview point, like osu!'s song select
 - 🎨 4 built-in themes (Dark, Glass, Sakura, Minimal), with controls drawn as icons that stay readable in every theme
 - 🔀 Shuffle & repeat modes (all, or one track); **Previous** first goes back to the start of the track, like most players
 - 🔊 Volume control
@@ -116,7 +118,7 @@ Click the pin in the titlebar, or in the sphere's top-left corner, to keep the w
 
 Open them with **⚙** in the player bar.
 
-- **Songs folder** — pick your osu! `Songs` folder and scan it. The scan is cached, and redone only when the folder's content changes.
+- **Songs folder** — pick your osu! `Songs` folder and scan it. The scan is cached, and redone only when the folder's content changes. *Hide duplicates* and *Start at the preview point* are here too.
 - **Themes** — Dark, Glass, Sakura, Minimal.
 - **Videos** — *Hide controls while playing*: in the sphere and the player bar, the controls fade out after a moment without moving the pointer, and come back as soon as it moves. *Visualizer for tracks without a video*: turn it off to see the background image instead.
 

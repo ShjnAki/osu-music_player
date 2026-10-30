@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 import { usePlayerStore, visibleTracks } from '@/stores/playerStore';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
 import type { Track } from '@/types';
@@ -29,10 +30,13 @@ export function Library() {
     currentTrack, setSearchQuery, setCurrentTrack,
     setBpmFilter, setVideoOnly, toggleFavorite,
     createPlaylist, deletePlaylist, addToPlaylist, removeFromPlaylist, setActivePlaylist,
+    importPlaylists, songsFolder,
   } = store;
 
   const [showBpmFilter, setShowBpmFilter] = useState(false);
   const [newPlaylistName, setNewPlaylistName] = useState('');
+  const [importing, setImporting] = useState(false);
+  const [importMessage, setImportMessage] = useState<string | null>(null);
   const [addingToPlaylist, setAddingToPlaylist] = useState<string | null>(null);
 
   const activePlaylist = tab === 'playlists' ? playlists.find(p => p.id === activePlaylistId) ?? null : null;
@@ -41,7 +45,7 @@ export function Library() {
   // et l'ordre de lecture ne peuvent plus diverger.
   const filtered = useMemo(
     () => visibleTracks(store),
-    [tracks, searchQuery, bpmFilter, videoOnly, favoriteIds, tab, activePlaylistId, playlists],
+    [tracks, searchQuery, bpmFilter, videoOnly, favoriteIds, tab, activePlaylistId, playlists, store.hideDuplicates, currentTrack],
   );
 
   const hasVideos = useMemo(() => tracks.some(t => t.videoPath), [tracks]);
@@ -57,6 +61,27 @@ export function Library() {
   const bpmValues = useMemo(() => tracks.filter(t => t.bpm).map(t => t.bpm!), [tracks]);
   const minBpm = bpmValues.length ? Math.floor(Math.min(...bpmValues)) : 0;
   const maxBpm = bpmValues.length ? Math.ceil(Math.max(...bpmValues)) : 300;
+
+  const handleImportCollections = async () => {
+    setImporting(true);
+    setImportMessage(null);
+    try {
+      const imported = await invoke<{ name: string; track_ids: string[]; missing: number }[]>(
+        'import_osu_collections',
+        { songsFolder, tracks: tracks.map(t => ({ id: t.id, path: t.path })) },
+      );
+      importPlaylists(imported.map(c => ({ name: c.name, trackIds: c.track_ids })));
+      const missing = imported.reduce((n, c) => n + c.missing, 0);
+      setImportMessage(
+        `${imported.length} collection${imported.length === 1 ? '' : 's'} imported`
+        + (missing ? ` (${missing} beatmap${missing === 1 ? '' : 's'} not in your library)` : ''),
+      );
+    } catch (e) {
+      setImportMessage(String(e));
+    } finally {
+      setImporting(false);
+    }
+  };
 
   const handleCreatePlaylist = () => {
     if (!newPlaylistName.trim()) return;
@@ -98,6 +123,10 @@ export function Library() {
             />
             <button onClick={handleCreatePlaylist}>+</button>
           </div>
+          <button className="playlist-import" onClick={handleImportCollections} disabled={importing}>
+            {importing ? 'Importing osu! collections…' : 'Import osu! collections'}
+          </button>
+          {importMessage && <span className="playlist-empty">{importMessage}</span>}
         </div>
       )}
 

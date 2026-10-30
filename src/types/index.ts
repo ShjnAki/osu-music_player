@@ -11,6 +11,7 @@ export interface Track {
   backgroundPath?: string;
   videoPath?: string;
   videoOffsetMs?: number;
+  previewTimeMs?: number;
 }
 
 export interface Playlist {

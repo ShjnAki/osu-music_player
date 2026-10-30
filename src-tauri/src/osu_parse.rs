@@ -115,6 +115,32 @@ pub fn parse_background_filename(content: &str) -> Option<String> {
     None
 }
 
+/// Point d'aperçu de la beatmap, en millisecondes : là où le menu d'osu! fait
+/// démarrer la musique. `PreviewTime: -1` signifie qu'il n'y en a pas.
+pub fn parse_preview_time(content: &str) -> Option<u32> {
+    let mut in_general = false;
+    for line in content.lines() {
+        let trimmed = line.trim();
+        if trimmed.starts_with('[') {
+            // [General] vient en premier : inutile de lire le reste du fichier.
+            if in_general {
+                break;
+            }
+            in_general = trimmed == "[General]";
+            continue;
+        }
+        if !in_general {
+            continue;
+        }
+        if let Some((key, value)) = trimmed.split_once(':') {
+            if key.trim() == "PreviewTime" {
+                return value.trim().parse::<i64>().ok().filter(|ms| *ms > 0).map(|ms| ms as u32);
+            }
+        }
+    }
+    None
+}
+
 /// Vidéo déclarée dans la section `[Events]`.
 #[derive(Debug, PartialEq)]
 pub struct VideoEvent {
@@ -388,5 +414,18 @@ Sprite,Foreground,Centre,\"sb/star.png\",320,240
 AudioFilename: audio.mp3
 ";
         assert_eq!(parse_background_filename(content), None);
+    }
+
+    #[test]
+    fn point_d_apercu_lu_dans_general() {
+        let osu = "osu file format v14\n\n[General]\nAudioFilename: audio.mp3\nAudioLeadIn: 0\nPreviewTime: 45210\nCountdown: 0\n\n[Editor]\nPreviewTime: 1\n";
+        assert_eq!(parse_preview_time(osu), Some(45210));
+    }
+
+    #[test]
+    fn point_d_apercu_absent_ou_desactive() {
+        assert_eq!(parse_preview_time("[General]\nPreviewTime: -1\n"), None);
+        assert_eq!(parse_preview_time("[General]\nAudioFilename: a.mp3\n[Metadata]\nPreviewTime: 300\n"), None);
+        assert_eq!(parse_preview_time(""), None);
     }
 }

@@ -23,6 +23,10 @@
 .playlist-create input:focus { border-color: var(--accent); outline: none; }
 .playlist-create button { font-size: 16px; width: 28px; height: 28px; border-radius: 6px; background: var(--accent); color: white; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .playlist-create button:hover { background: var(--accent-hover); }
+/* Discret : une action ponctuelle, à côté de la création qui sert souvent. */
+.playlist-import { display: block; margin-top: 8px; font-size: 11px; color: var(--text-secondary); padding: 2px 0; }
+.playlist-import:hover { color: var(--accent); }
+.playlist-import:disabled { opacity: 0.6; cursor: wait; }
 
 /* Search header */
 .library-header { padding: 10px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; background: var(--bg-secondary); }

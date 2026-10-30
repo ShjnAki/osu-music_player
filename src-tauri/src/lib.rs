@@ -2,6 +2,7 @@
 
 #[cfg(target_os = "linux")]
 mod media_server;
+mod osu_collections;
 mod osu_parse;
 mod wsl_pin;
 
@@ -16,7 +17,7 @@ const MAX_DURATION_SECS: u64 = 600;
 /// Incrémenter invalide les caches existants. Nécessaire quand le scan produit
 /// des champs que les anciens caches n'ont pas : sans ça, un cache dont la
 /// mtime n'a pas bougé est resservi indéfiniment, sans les nouvelles données.
-const CACHE_VERSION: u32 = 4;
+const CACHE_VERSION: u32 = 5;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Track {
@@ -35,6 +36,10 @@ pub struct Track {
     /// Instant de la musique (ms) où démarre la vidéo, pour la synchroniser.
     #[serde(default)]
     pub video_offset_ms: Option<i64>,
+    /// Point d'aperçu de la beatmap (ms), où l'option « démarrer à l'aperçu »
+    /// fait commencer la lecture.
+    #[serde(default)]
+    pub preview_time_ms: Option<u32>,
 }
 
 fn md5_simple(input: &str) -> u64 {
@@ -210,6 +215,7 @@ struct OsuMetadata {
     bpm: Option<f32>,
     video: Option<String>,
     video_offset_ms: Option<i64>,
+    preview_time_ms: Option<u32>,
 }
 
 /// Image de fond, BPM et vidéo d'une beatmap, lus en une seule passe sur le
@@ -242,6 +248,7 @@ fn read_osu_metadata(folder: &Path, duration_secs: Option<u64>) -> OsuMetadata {
             bpm: None,
             video: loose_video(),
             video_offset_ms: loose_video().map(|_| 0),
+            preview_time_ms: None,
         };
     };
 
@@ -266,6 +273,7 @@ fn read_osu_metadata(folder: &Path, duration_secs: Option<u64>) -> OsuMetadata {
         bpm: osu_parse::parse_dominant_bpm(&content, duration_secs),
         video,
         video_offset_ms,
+        preview_time_ms: osu_parse::parse_preview_time(&content),
     }
 }
 
@@ -385,6 +393,7 @@ fn scan_songs_folder(folder_path: &str) -> Result<Vec<Track>, String> {
                 background_path: metadata.background,
                 video_path: metadata.video,
                 video_offset_ms: metadata.video_offset_ms,
+                preview_time_ms: metadata.preview_time_ms,
             });
         }
     }
@@ -536,6 +545,20 @@ fn set_wsl_topmost(app: tauri::AppHandle, enabled: bool) -> Result<(), String> {
     wsl_pin::set_topmost(&title, enabled)
 }
 
+/// Collections d'osu! traduites en pistes de la bibliothèque : lecture de
+/// collection.db et hachage des .osu, hors du fil principal.
+#[tauri::command(async)]
+fn import_osu_collections(
+    songs_folder: String,
+    tracks: Vec<osu_collections::LibraryTrack>,
+) -> Result<Vec<osu_collections::ImportedCollection>, String> {
+    let path = osu_collections::collection_db_path(Path::new(&songs_folder))
+        .ok_or("the Songs folder has no parent osu! folder")?;
+    let bytes = std::fs::read(&path).map_err(|_| format!("no collection.db at {}", path.display()))?;
+    let collections = osu_collections::parse_collection_db(&bytes)?;
+    Ok(osu_collections::import(&collections, &tracks))
+}
+
 /// Adresse du serveur média local, ou rien hors Linux, où asset:// suffit.
 struct MediaBaseUrl(Option<String>);
 
@@ -581,6 +604,7 @@ pub fn run() {
             media_base_url,
             always_on_top_support,
             set_wsl_topmost,
+            import_osu_collections,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
