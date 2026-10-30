@@ -19,6 +19,8 @@ export interface PinState {
    * qu'il réapparaît en changeant de mode.
    */
   failures: number;
+  /** Ce que Windows ou PowerShell a répondu au dernier refus. */
+  failureReason: string | null;
 }
 
 /** Applique l'épingle au premier plan à la fenêtre, selon ce que permet le système. */
@@ -26,6 +28,7 @@ export function useAlwaysOnTop(): PinState {
   const { alwaysOnTop, setAlwaysOnTop, isSphereMode } = usePlayerStore();
   const [support, setSupport] = useState<PinSupport | null>(null);
   const [failures, setFailures] = useState(0);
+  const [failureReason, setFailureReason] = useState<string | null>(null);
   // Sous WSL, chaque demande lance PowerShell : pas de « désépingler » pour
   // une fenêtre qu'on n'a jamais épinglée.
   const appliedRef = useRef(false);
@@ -43,12 +46,13 @@ export function useAlwaysOnTop(): PinState {
     // Redemandé aussi au changement de mode : on ignore si Windows garde le
     // rang d'une fenêtre WSL que l'on redimensionne.
     appliedRef.current = alwaysOnTop;
-    invoke('set_wsl_topmost', { enabled: alwaysOnTop }).catch(() => {
+    invoke('set_wsl_topmost', { enabled: alwaysOnTop }).catch((reason) => {
       appliedRef.current = false;
+      setFailureReason(String(reason));
       setFailures((n) => n + 1);
       setAlwaysOnTop(false);
     });
   }, [alwaysOnTop, support, isSphereMode]);
 
-  return { support, failures };
+  return { support, failures, failureReason };
 }

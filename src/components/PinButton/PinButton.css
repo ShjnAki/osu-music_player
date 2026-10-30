@@ -19,6 +19,15 @@
      de la sphère. */
   animation: bgFadeIn 0.2s ease;
 }
+/* Sélectionnable, pour être recopiée dans un signalement. */
+.pin-hint-reason {
+  display: block;
+  margin-top: 6px;
+  font-size: 10.5px;
+  color: var(--text-secondary);
+  word-break: break-word;
+  user-select: text;
+}
 .pin-hint kbd {
   font: inherit;
   font-weight: 600;
