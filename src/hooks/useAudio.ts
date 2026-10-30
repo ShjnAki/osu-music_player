@@ -104,7 +104,14 @@ export function useAudio() {
 
       const { isMuted: muted, volume: vol } = usePlayerStore.getState();
       audio.volume = muted ? 0 : vol;
-      audio.addEventListener('ended', () => nextTrack(), { signal });
+      audio.addEventListener('ended', () => {
+        if (usePlayerStore.getState().repeatMode === 'one') {
+          audio.currentTime = 0;
+          audio.play().catch(() => {});
+        } else {
+          nextTrack();
+        }
+      }, { signal });
       audio.addEventListener('error', () => setStatus('error'), { signal });
       audio.addEventListener('play', () => setStatus('playing'), { signal });
       audio.addEventListener('pause', () => { if (!audio.ended) setStatus('paused'); }, { signal });
