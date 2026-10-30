@@ -17,21 +17,22 @@ Want to build it yourself instead? See [Getting Started](#getting-started).
 
 ## Features
 
-- 🎵 Plays MP3 and OGG files from your osu! Songs folder
+- 🎵 Plays MP3 and OGG files from your osu! Songs folder, on any drive (`S:\` included) and through WSL
 - 📋 Library with search (title / artist), BPM range filter and a filter for tracks with a video
-- ❤️ Favorites and manual playlists
-- 🎨 4 built-in themes (Dark, Glass, Sakura, Minimal)
-- 🔀 Shuffle & repeat modes
+- ❤️ Favorites and manual playlists: add tracks, remove them with **×**
+- 🎨 4 built-in themes (Dark, Glass, Sakura, Minimal), with controls drawn as icons that stay readable in every theme
+- 🔀 Shuffle & repeat modes (all, or one track); **Previous** first goes back to the start of the track, like most players
 - 🔊 Volume control
 - 🏷️ ID3 tag reading (title, artist) with folder-name fallback
 - 🖼️ Album art and beatmap background images
-- 🎬 Beatmap videos, muted and synced to the music, shown large when you hide the library (☰); the controls over them fade out while you're not using them
-- 🎛️ Spectrum visualizer for tracks without a video: bars in the window, a ring in the sphere
+- 🎬 Beatmap videos, muted and synced to the music, shown large when you hide the library (☰)
+- 🎛️ Spectrum visualizer for tracks without a video: bars in the window, a ring in the sphere. It analyses a silent copy of the track, so the sound you hear never depends on it
+- ✨ While a track plays, the controls fade out when you're not using them, to show the video, the visualizer or the background image, sharp (Settings → Videos)
 - 🔵 Sphere mode — circular window with track list inside
-- 📌 Optional always-on-top pin, in the titlebar and the sphere (under WSL, the app asks Windows; on Wayland, apps can't pin themselves: use the window menu, Alt+Space on GNOME → Always on Top)
-- ⚡ Metadata cache: first scan is slow, subsequent launches load instantly
+- 📌 Optional always-on-top pin, in the titlebar and the sphere — see [Always on Top](#always-on-top)
+- ⚡ Metadata cache: first scan is slow, subsequent launches load instantly; the next track is preloaded so it starts right away
 - 💾 Settings persisted between sessions
-- 🪟 Frameless, draggable window
+- 🪟 Frameless window: drag it from the titlebar, resize it from its edges or the grip in the bottom-right corner
 
 ## Screenshots
 
@@ -69,29 +70,55 @@ osu-player/
 ├── src/                        # React frontend
 │   ├── components/
 │   │   ├── BeatmapVideo/       # Beatmap video, muted and synced to the music
-│   │   ├── Library/            # Track list, search, favorites, playlists, BPM filter
+│   │   ├── Icons/              # SVG icons of the controls (theme color)
+│   │   ├── Library/            # Track list, search, favorites, playlists, BPM and video filters
+│   │   ├── PinButton/          # Always-on-top pin, and what to do where the app can't pin itself
 │   │   ├── Player/             # PlayerBar — controls, progress, cover art
-│   │   ├── Settings/           # Theme selector, folder picker
-│   │   └── SphereView/         # Circular mode layout
+│   │   ├── ResizeHandles/      # Resize edges and grip of the frameless window
+│   │   ├── Settings/           # Folder picker, themes, video options
+│   │   ├── SphereView/         # Circular mode layout
+│   │   ├── Stage/              # Large video or visualizer when the library is hidden
+│   │   └── Visualizer/         # Spectrum bars and ring
 │   ├── hooks/
+│   │   ├── useAlwaysOnTop.ts   # Applies the pin: by the window itself, or through Windows under WSL
 │   │   ├── useAudio.ts         # Playback engine (native <audio>, preloads the next track)
+│   │   ├── useAutoHide.ts      # Fades the controls out after a moment without pointer activity
 │   │   ├── useTheme.ts         # CSS variable theming + 4 built-in themes
 │   │   └── useVirtualRows.ts   # Renders only the visible rows of the track lists
-│   ├── lib/localMedia.ts       # Media URLs: asset:// or the Linux media server
+│   ├── lib/
+│   │   ├── audioAnalysis.ts    # Web Audio analysis of a silent copy of the track, for the visualizer
+│   │   └── localMedia.ts       # Media URLs: asset:// or the Linux media server
 │   ├── stores/
-│   │   └── playerStore.ts      # Zustand global state (persist: folder, volume, theme, favorites, playlists)
+│   │   └── playerStore.ts      # Zustand global state (persist: folder, volume, theme, favorites, playlists, options)
 │   ├── types/index.ts          # TypeScript interfaces
 │   └── styles/globals.css
 └── src-tauri/                  # Rust backend
     └── src/
-        ├── lib.rs              # Tauri commands: scan, cache, sphere mode, media server URL
+        ├── lib.rs              # Tauri commands: scan, cache, sphere mode, media server URL, always on top
         ├── osu_parse.rs        # .osu parsing: BPM, background, video
-        └── media_server.rs     # Local HTTP media server (Linux)
+        ├── media_server.rs     # Local HTTP media server (Linux)
+        └── wsl_pin.rs          # Always on top under WSL, asked of Windows through PowerShell
 ```
 
 ## Sphere Mode
 
 Click **◎** in the titlebar to switch to sphere mode: a circular 360×360 window. The pin in its top-left corner, like the one in the titlebar, keeps the window above the others. The beatmap background, or its video, fills the sphere. Drag the sphere from any free spot to move it. While a track plays, the list and controls fade out after a moment without moving the pointer, to show the video, the visualizer or the background image, sharp; they come back as soon as the pointer moves (Settings → Videos turns this off). Click **⊡** to return to normal mode.
+
+## Always on Top
+
+Click the pin in the titlebar, or in the sphere's top-left corner, to keep the window above the others; click it again to release it. The choice is remembered and applies to both modes. Off by default.
+
+- **Windows, macOS, Linux on X11** — the window pins itself.
+- **WSL** — the window is displayed by Windows (WSLg), so the app asks Windows to pin it, through `powershell.exe`. The first time takes a second or two. If Windows refuses, the pin turns off and its message says why.
+- **Wayland, outside WSL** — an app can't keep itself on top there. Ask your desktop instead: on GNOME, press **Alt+Space** and pick **Always on Top**.
+
+## Settings
+
+Open them with **⚙** in the player bar.
+
+- **Songs folder** — pick your osu! `Songs` folder and scan it. The scan is cached, and redone only when the folder's content changes.
+- **Themes** — Dark, Glass, Sakura, Minimal.
+- **Videos** — *Hide controls while playing*: in the sphere and the player bar, the controls fade out after a moment without moving the pointer, and come back as soon as it moves. *Visualizer for tracks without a video*: turn it off to see the background image instead.
 
 ## Creating a Custom Theme
 
