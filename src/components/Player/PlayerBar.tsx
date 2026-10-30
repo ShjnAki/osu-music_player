@@ -40,12 +40,15 @@ export function PlayerBar({ onToggle, onSeek, onPrevious, showVisual }: Props) {
   const videoTrack = showVisual ? playableVideo : null;
   const visualizer = showVisual && showVisualizer && !!currentTrack && !currentTrack.videoPath;
   // En pause, les contrôles restent : c'est pour s'en servir qu'on s'arrête.
+  // Comme dans la sphère, l'image de fond suffit à justifier l'effacement :
+  // elle se montre alors nette. Pas quand la grande zone montre déjà le visuel.
+  const backdrop = !!videoTrack || visualizer || (showVisual && !!bgUrl);
   const { hidden: controlsHidden, handlers: autoHide } =
-    useAutoHide((!!videoTrack || visualizer) && hideControlsOverVideo && status === 'playing');
+    useAutoHide(backdrop && hideControlsOverVideo && status === 'playing');
 
   return (
     <div
-      className={`player-bar fade-in ${videoTrack ? 'has-video' : ''} ${controlsHidden ? 'controls-hidden' : ''}`}
+      className={`player-bar fade-in ${videoTrack ? 'has-video' : ''} ${visualizer ? 'has-visualizer' : ''} ${controlsHidden ? 'controls-hidden' : ''}`}
       {...autoHide}
     >
       {videoTrack ? (

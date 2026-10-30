@@ -91,7 +91,7 @@ osu-player/
 
 ## Sphere Mode
 
-Click **◎** in the titlebar to switch to sphere mode: a circular 360×360 window. The pin in its top-left corner, like the one in the titlebar, keeps the window above the others. The beatmap background, or its video, fills the sphere. Drag the sphere from any free spot to move it. When a video is playing, the list and controls fade out after a moment without moving the pointer, so you can watch it; they come back as soon as the pointer moves (Settings → Videos turns this off). Click **⊡** to return to normal mode.
+Click **◎** in the titlebar to switch to sphere mode: a circular 360×360 window. The pin in its top-left corner, like the one in the titlebar, keeps the window above the others. The beatmap background, or its video, fills the sphere. Drag the sphere from any free spot to move it. While a track plays, the list and controls fade out after a moment without moving the pointer, to show the video, the visualizer or the background image, sharp; they come back as soon as the pointer moves (Settings → Videos turns this off). Click **⊡** to return to normal mode.
 
 ## Creating a Custom Theme
 

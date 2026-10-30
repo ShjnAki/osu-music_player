@@ -51,8 +51,8 @@ export function Settings({ onScan, isScanning }: Props) {
               onChange={(e) => setHideControlsOverVideo(e.target.checked)}
             />
             <span>
-              Hide controls over videos and the visualizer
-              <small>In the sphere and the player bar, they fade out after a moment without moving the pointer, and come back as soon as it moves.</small>
+              Hide controls while playing
+              <small>In the sphere and the player bar, they fade out after a moment without moving the pointer to show the video, the visualizer or the sharp background, and come back as soon as it moves.</small>
             </span>
           </label>
           <label className="settings-toggle">

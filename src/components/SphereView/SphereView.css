@@ -311,6 +311,19 @@
 .sphere-view.controls-hidden > .sphere-bg-overlay {
   opacity: 0.15;
 }
+/* Le flou ne servait qu'à lire la liste par-dessus l'image : une fois la
+   liste effacée, l'image se montre nette. */
+.sphere-view.visual-focus > .sphere-bg {
+  transition: background-image 0.6s ease, filter 0.4s ease;
+}
+.sphere-view.controls-hidden > .sphere-bg {
+  filter: none;
+}
+/* Assombrie sous l'anneau, comme dans la grande zone : nette et claire,
+   l'image noyait le spectre. */
+.sphere-view.controls-hidden.has-visualizer > .sphere-bg {
+  filter: brightness(0.5);
+}
 
 /* Anneau du visualiseur, pour les pistes sans vidéo. Positionné ici et non
    par sa propre feuille : la règle :where() plus haut le remettrait dans le

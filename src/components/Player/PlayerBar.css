@@ -92,6 +92,16 @@
 .player-bar.controls-hidden > .player-bg-overlay {
   opacity: 0.15;
 }
+/* Comme dans la sphère : le flou ne servait qu'à lire les contrôles. */
+.player-bar > .player-bg {
+  transition: filter 0.4s ease;
+}
+.player-bar.controls-hidden > .player-bg {
+  filter: none;
+}
+.player-bar.controls-hidden.has-visualizer > .player-bg {
+  filter: brightness(0.5);
+}
 
 /* Tout le contenu passe au-dessus du bg */
 .player-bar > *:not(.player-bg):not(.player-bg-overlay):not(.player-video):not(.player-visualizer) {

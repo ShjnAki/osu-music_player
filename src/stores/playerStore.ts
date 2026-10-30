@@ -28,7 +28,7 @@ interface PlayerState {
   showLibrary: boolean;
   showSettings: boolean;
   isSphereMode: boolean;
-  /** Efface les contrôles posés sur une vidéo quand on ne s'en sert pas, pour la laisser voir. */
+  /** Efface les contrôles quand on ne s'en sert pas, pour laisser voir la vidéo, le visualiseur ou l'image de fond. */
   hideControlsOverVideo: boolean;
   /** Visualiseur pour les pistes sans vidéo ; il en analyse une copie silencieuse par Web Audio. */
   showVisualizer: boolean;
