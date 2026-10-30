@@ -8,7 +8,6 @@ interface PlayerState {
   bpmFilter: [number, number] | null;
   /** Seulement les pistes qui ont une vidéo : pour en voir le rendu sans les chercher. */
   videoOnly: boolean;
-  favoritesOnly: boolean;
   favoriteIds: Set<string>;
   playlists: Playlist[];
   activePlaylistId: string | null;
@@ -31,14 +30,13 @@ interface PlayerState {
   isSphereMode: boolean;
   /** Efface les contrôles posés sur une vidéo quand on ne s'en sert pas, pour la laisser voir. */
   hideControlsOverVideo: boolean;
-  /** Visualiseur pour les pistes sans vidéo ; il fait passer leur son par Web Audio. */
+  /** Visualiseur pour les pistes sans vidéo ; il en analyse une copie silencieuse par Web Audio. */
   showVisualizer: boolean;
 
   setTracks: (tracks: Track[]) => void;
   setSearchQuery: (q: string) => void;
   setBpmFilter: (range: [number, number] | null) => void;
   setVideoOnly: (v: boolean) => void;
-  setFavoritesOnly: (v: boolean) => void;
   toggleFavorite: (id: string) => void;
   createPlaylist: (name: string) => void;
   deletePlaylist: (id: string) => void;
@@ -50,7 +48,6 @@ interface PlayerState {
   setIsScanning: (v: boolean) => void;
   setCurrentTrack: (track: Track | null) => void;
   setStatus: (status: PlayerStatus) => void;
-  setProgress: (p: number) => void;
   setPlayback: (progress: number, audioTime: number) => void;
   setVolume: (v: number) => void;
   toggleMute: () => void;
@@ -121,7 +118,7 @@ export const usePlayerStore = create<PlayerState>()(
   persist(
     (set, get) => ({
       tracks: [], searchQuery: '', bpmFilter: null, videoOnly: false,
-      favoritesOnly: false, favoriteIds: new Set<string>(),
+      favoriteIds: new Set<string>(),
       playlists: [], activePlaylistId: null, libraryTab: 'all',
       songsFolder: '', isScanning: false,
       currentTrack: null, status: 'idle', progress: 0, audioTime: 0,
@@ -134,7 +131,6 @@ export const usePlayerStore = create<PlayerState>()(
       setSearchQuery: (searchQuery) => set({ searchQuery }),
       setBpmFilter: (bpmFilter) => set({ bpmFilter }),
       setVideoOnly: (videoOnly) => set({ videoOnly }),
-      setFavoritesOnly: (favoritesOnly) => set({ favoritesOnly }),
       toggleFavorite: (id) => set((s) => {
         const next = new Set(s.favoriteIds);
         if (next.has(id)) next.delete(id); else next.add(id);
@@ -167,7 +163,6 @@ export const usePlayerStore = create<PlayerState>()(
       setIsScanning: (isScanning) => set({ isScanning }),
       setCurrentTrack: (currentTrack) => set({ currentTrack, progress: 0, audioTime: 0 }),
       setStatus: (status) => set({ status }),
-      setProgress: (progress) => set({ progress }),
       // Une seule mise à jour pour les deux : chacune re-rend tous les abonnés.
       setPlayback: (progress, audioTime) => set({ progress, audioTime }),
       setVolume: (volume) => set({ volume, isMuted: false }),

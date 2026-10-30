@@ -147,7 +147,13 @@
 
 /* Progress */
 .player-progress { display: flex; align-items: center; gap: 8px; }
-.player-time { font-size: 11px; color: var(--text-muted); font-variant-numeric: tabular-nums; width: 32px; text-align: center; flex-shrink: 0; }
+/* Claires comme les contrôles, et détachées du visualiseur ou de la vidéo
+   qui passent dessous : la couleur discrète du thème s'y perdait. */
+.player-time {
+  font-size: 11px; color: color-mix(in srgb, var(--glint) 80%, var(--accent));
+  text-shadow: 0 1px 3px color-mix(in srgb, var(--shade) 70%, transparent);
+  font-variant-numeric: tabular-nums; width: 32px; text-align: center; flex-shrink: 0;
+}
 
 .player-seek {
   -webkit-appearance: none; appearance: none;
