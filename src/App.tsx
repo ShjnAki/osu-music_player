@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type MouseEvent } from 'react';
 import { useTheme } from '@/hooks/useTheme';
 import { useAudio } from '@/hooks/useAudio';
 import { usePlayerStore } from '@/stores/playerStore';
@@ -13,6 +13,21 @@ import { SphereView } from '@/components/SphereView/SphereView';
 import { Stage } from '@/components/Stage/Stage';
 import '@/styles/globals.css';
 import './App.css';
+
+/**
+ * Déplace la fenêtre depuis la barre de titre, hors boutons.
+ *
+ * Pas de data-tauri-drag-region : sur un double-clic, Tauri agrandit la
+ * fenêtre. Or elle a une taille maximale (600×800), et sous GNOME Wayland le
+ * compositeur impose la taille de l'écran à une fenêtre agrandie : celle qui
+ * ne peut pas la prendre est déconnectée, et l'appli se fermait. Le
+ * double-clic ne fait donc plus rien.
+ */
+function startTitlebarDrag(e: MouseEvent) {
+  if (e.button !== 0 || (e.target as Element).closest('button')) return;
+  e.preventDefault();
+  if (e.detail === 1) getCurrentWindow().startDragging().catch(() => {});
+}
 
 export default function App() {
   useTheme();
@@ -111,7 +126,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <div className="titlebar" data-tauri-drag-region>
+      <div className="titlebar" onMouseDown={startTitlebarDrag}>
         <span className="titlebar-title">osu! player</span>
         <div className="titlebar-actions">
           <button className="titlebar-btn" onClick={toggleSphereMode} title="Sphere mode">◎</button>
