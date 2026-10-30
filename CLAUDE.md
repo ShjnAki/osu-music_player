@@ -54,7 +54,8 @@ Commands that touch the disk are declared `#[tauri::command(async)]`: a synchron
 
 ### Key constraints
 
-- The window is **frameless and transparent** (`decorations: false, transparent: true` in `tauri.conf.json`). The titlebar drags through `data-tauri-drag-region`, which only reacts to the exact element clicked. In sphere mode, `SphereView` starts the drag itself with `startDragging()` from any free point, buttons and tracks excluded.
+- The window is **frameless and transparent** (`decorations: false, transparent: true` in `tauri.conf.json`). The titlebar and the sphere start the drag themselves with `startDragging()`, from any free point, buttons and tracks excluded. Don't use `data-tauri-drag-region`: it only reacts to the exact element clicked, and it maximizes the window on double-click, which with the window's maximum size gets the app disconnected under GNOME Wayland.
+- `ResizeHandles` gives the frameless window resize edges with the matching cursors (`startResizeDragging`), plus a visible grip in the bottom-right corner; none in sphere mode, which is not resizable.
 - The asset protocol scope is split per OS (`tauri.windows.conf.json`: `C:\**`, `$HOME\**`; `tauri.linux.conf.json`: `$HOME`, `/mnt`, `/media`, `/run/media`). On top of that, `allow_songs_folder` adds the chosen Songs folder at runtime, which covers other drives (`S:\`) and hidden Wine prefixes that Unix globs exclude by default. The Linux media server checks the same scope.
 - `SphereView.css` uses no hard-coded colors: theme variables plus `--glint` and `--shade` from `src/styles/globals.css`, derived with `color-mix`.
 - The `@` alias in `vite.config.ts` resolves to `./src`, used throughout imports.
