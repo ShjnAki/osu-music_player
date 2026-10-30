@@ -73,7 +73,7 @@
 /* Track action buttons (fav + playlist) */
 .track-actions { display: flex; gap: 2px; flex-shrink: 0; opacity: 0; transition: opacity 0.15s; }
 .track-row:hover .track-actions { opacity: 1; }
-.track-fav-btn, .track-playlist-btn {
+.track-fav-btn, .track-playlist-btn, .track-remove-btn {
   font-size: 13px; width: 22px; height: 22px; border-radius: 4px;
   display: flex; align-items: center; justify-content: center;
   color: var(--text-muted);
@@ -81,6 +81,7 @@
 .track-fav-btn:hover { color: #ff88aa; }
 .track-fav-btn.active { color: #ff66aa; opacity: 1; }
 .track-playlist-btn:hover { color: var(--accent); }
+.track-remove-btn:hover { color: var(--text-primary); }
 
 /* Add-to-playlist dropdown */
 .add-to-playlist-overlay { position: fixed; inset: 0; z-index: 100; }

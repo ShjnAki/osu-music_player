@@ -16,7 +16,7 @@ export function Library() {
     playlists, activePlaylistId,
     currentTrack, setSearchQuery, setCurrentTrack,
     setBpmFilter, toggleFavorite,
-    createPlaylist, deletePlaylist, addToPlaylist, setActivePlaylist,
+    createPlaylist, deletePlaylist, addToPlaylist, removeFromPlaylist, setActivePlaylist,
   } = usePlayerStore();
 
   const [tab, setTab] = useState<Tab>('all');
@@ -210,6 +210,13 @@ export function Library() {
                         onClick={() => setAddingToPlaylist(track.id)}
                         title="Add to playlist"
                       >+</button>
+                    )}
+                    {activePlaylist && (
+                      <button
+                        className="track-remove-btn"
+                        onClick={() => removeFromPlaylist(activePlaylist.id, track.id)}
+                        title={`Remove from ${activePlaylist.name}`}
+                      >×</button>
                     )}
                   </div>
                 </div>
