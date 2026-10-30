@@ -48,6 +48,9 @@ pub fn activity_payload(activity: Option<&Activity>, pid: u32, nonce: u64) -> Va
         let mut value = json!({
             // « Écoute » plutôt que « Joue à ».
             "type": 2,
+            // Le statut (liste des membres, profil) montre le titre plutôt que
+            // le nom de l'appli.
+            "status_display_type": 2,
             "details": field(&a.title),
             "state": field(&state),
             "assets": { "large_image": "logo", "large_text": "osu! Player" },
@@ -186,6 +189,7 @@ mod tests {
         assert_eq!(payload["args"]["pid"], 42);
         let activity = &payload["args"]["activity"];
         assert_eq!(activity["type"], 2);
+        assert_eq!(activity["status_display_type"], 2);
         assert_eq!(activity["details"], "Neon Skyline");
         assert_eq!(activity["state"], "by Kurenai Mio");
         assert_eq!(activity["timestamps"]["end"], 193_000);

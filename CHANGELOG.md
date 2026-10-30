@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.2] - 2026-10-30
+
+### Changed
+- Discord: your status (member list, profile) shows the track title instead of the app's name (`status_display_type`).
+
+### Fixed
+- Sphere mode on Windows: a beatmap video filled the whole square window instead of the circle. WebView2 draws videos through a system overlay that ignores `border-radius` clipping; the sphere is now clipped with `clip-path`.
+
 ## [0.3.1] - 2026-10-30
 
 ### Changed
