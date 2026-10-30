@@ -6,7 +6,11 @@ import './Settings.css';
 interface Props { onScan: () => void; isScanning: boolean; }
 
 export function Settings({ onScan, isScanning }: Props) {
-  const { songsFolder, setSongsFolder, setShowSettings } = usePlayerStore();
+  const {
+    songsFolder, setSongsFolder, setShowSettings,
+    hideControlsOverVideo, setHideControlsOverVideo,
+    showVisualizer, setShowVisualizer,
+  } = usePlayerStore();
   const { themes, currentTheme, setTheme } = useTheme();
 
   const handlePickFolder = async () => {
@@ -36,6 +40,32 @@ export function Settings({ onScan, isScanning }: Props) {
           <button className={`btn-primary ${isScanning ? 'loading' : ''}`} onClick={onScan} disabled={isScanning}>
             {isScanning ? 'Scanning...' : 'Scan folder'}
           </button>
+        </section>
+
+        <section className="settings-section">
+          <h3>Videos</h3>
+          <label className="settings-toggle">
+            <input
+              type="checkbox"
+              checked={hideControlsOverVideo}
+              onChange={(e) => setHideControlsOverVideo(e.target.checked)}
+            />
+            <span>
+              Hide controls over videos and the visualizer
+              <small>In the sphere and the player bar, they fade out after a moment without moving the pointer, and come back as soon as it moves.</small>
+            </span>
+          </label>
+          <label className="settings-toggle">
+            <input
+              type="checkbox"
+              checked={showVisualizer}
+              onChange={(e) => setShowVisualizer(e.target.checked)}
+            />
+            <span>
+              Visualizer for tracks without a video
+              <small>The sound goes through Web Audio to be analysed. Turn this off if playback misbehaves.</small>
+            </span>
+          </label>
         </section>
 
         <section className="settings-section">

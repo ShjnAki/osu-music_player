@@ -44,4 +44,5 @@ export interface ThemeVariables {
 }
 
 export type RepeatMode = 'none' | 'one' | 'all';
+export type LibraryTab = 'all' | 'favorites' | 'playlists';
 export type PlayerStatus = 'idle' | 'loading' | 'playing' | 'paused' | 'error';

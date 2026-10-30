@@ -1,17 +1,24 @@
-import { useState } from 'react';
 import { usePlayerStore } from '@/stores/playerStore';
 import { convertFileSrc } from '@tauri-apps/api/core';
-import { BeatmapVideo, hasVideo } from '@/components/BeatmapVideo/BeatmapVideo';
+import { BeatmapVideo, useVideoTrack } from '@/components/BeatmapVideo/BeatmapVideo';
+import { useAutoHide } from '@/hooks/useAutoHide';
+import { Visualizer } from '@/components/Visualizer/Visualizer';
 import './PlayerBar.css';
 
-interface Props { onToggle: () => void; onSeek: (ratio: number) => void; }
+interface Props {
+  onToggle: () => void;
+  onSeek: (ratio: number) => void;
+  onPrevious: () => void;
+  /** Faux quand la vidéo ou le visualiseur passe déjà en grand au-dessus : les montrer deux fois coûterait pour rien. */
+  showVisual: boolean;
+}
 
-export function PlayerBar({ onToggle, onSeek }: Props) {
+export function PlayerBar({ onToggle, onSeek, onPrevious, showVisual }: Props) {
   const {
     currentTrack, status, progress, volume, isMuted,
     isShuffled, repeatMode, setVolume, toggleMute,
-    toggleShuffle, cycleRepeat, nextTrack, prevTrack,
-    showSettings, setShowSettings, showLibrary, setShowLibrary
+    toggleShuffle, cycleRepeat, nextTrack,
+    showSettings, setShowSettings, showLibrary, setShowLibrary, hideControlsOverVideo, showVisualizer,
   } = usePlayerStore();
 
   const isPlaying = status === 'playing';
@@ -26,20 +33,24 @@ export function PlayerBar({ onToggle, onSeek }: Props) {
   const bgRaw = currentTrack?.backgroundPath ?? currentTrack?.coverPath ?? null;
   const bgUrl = bgRaw ? convertFileSrc(bgRaw) : null;
 
-  // Codec non pris en charge par la webview : on retombe sur l'image de fond.
-  const [failedVideo, setFailedVideo] = useState<string | null>(null);
-  const videoTrack = hasVideo(currentTrack) && currentTrack.videoPath !== failedVideo
-    ? currentTrack
-    : null;
+  const { videoTrack: playableVideo, markUnavailable } = useVideoTrack(currentTrack);
+  const videoTrack = showVisual ? playableVideo : null;
+  const visualizer = showVisual && showVisualizer && !!currentTrack && !currentTrack.videoPath;
+  // En pause, les contrôles restent : c'est pour s'en servir qu'on s'arrête.
+  const { hidden: controlsHidden, handlers: autoHide } =
+    useAutoHide((!!videoTrack || visualizer) && hideControlsOverVideo && status === 'playing');
 
   return (
-    <div className={`player-bar fade-in ${videoTrack ? 'has-video' : ''}`}>
+    <div
+      className={`player-bar fade-in ${videoTrack ? 'has-video' : ''} ${controlsHidden ? 'controls-hidden' : ''}`}
+      {...autoHide}
+    >
       {videoTrack ? (
         <BeatmapVideo
           key={videoTrack.id}
           track={videoTrack}
           className="player-video"
-          onUnavailable={() => setFailedVideo(videoTrack.videoPath)}
+          onUnavailable={markUnavailable}
         />
       ) : bgUrl && (
         <div
@@ -48,6 +59,7 @@ export function PlayerBar({ onToggle, onSeek }: Props) {
         />
       )}
       <div className="player-bg-overlay" />
+      {visualizer && <Visualizer variant="bars" className="player-visualizer" />}
 
       {/* Cover */}
       <div className="player-cover">
@@ -92,7 +104,7 @@ export function PlayerBar({ onToggle, onSeek }: Props) {
       {/* Controls */}
       <div className="player-controls">
         <button className={`ctrl-btn ${isShuffled ? 'active' : ''}`} onClick={toggleShuffle} title="Shuffle">⇄</button>
-        <button className="ctrl-btn" onClick={prevTrack} title="Previous">⏮</button>
+        <button className="ctrl-btn" onClick={onPrevious} title="Previous">⏮</button>
         <button className={`ctrl-btn play-btn`} onClick={onToggle}>
           {status === 'loading'
             ? <span style={{ animation: 'spin 1s linear infinite', display: 'inline-block' }}>◌</span>

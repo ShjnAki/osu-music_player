@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type MouseEvent } from 'react';
 import { useTheme } from '@/hooks/useTheme';
 import { useAudio } from '@/hooks/useAudio';
 import { usePlayerStore } from '@/stores/playerStore';
@@ -10,12 +10,29 @@ import { PlayerBar } from '@/components/Player/PlayerBar';
 import { Library } from '@/components/Library/Library';
 import { Settings } from '@/components/Settings/Settings';
 import { SphereView } from '@/components/SphereView/SphereView';
+import { Stage } from '@/components/Stage/Stage';
+import { ResizeHandles } from '@/components/ResizeHandles/ResizeHandles';
 import '@/styles/globals.css';
 import './App.css';
 
+/**
+ * Déplace la fenêtre depuis la barre de titre, hors boutons.
+ *
+ * Pas de data-tauri-drag-region : sur un double-clic, Tauri agrandit la
+ * fenêtre. Or elle a une taille maximale (600×800), et sous GNOME Wayland le
+ * compositeur impose la taille de l'écran à une fenêtre agrandie : celle qui
+ * ne peut pas la prendre est déconnectée, et l'appli se fermait. Le
+ * double-clic ne fait donc plus rien.
+ */
+function startTitlebarDrag(e: MouseEvent) {
+  if (e.button !== 0 || (e.target as Element).closest('button')) return;
+  e.preventDefault();
+  if (e.detail === 1) getCurrentWindow().startDragging().catch(() => {});
+}
+
 export default function App() {
   useTheme();
-  const { toggle, seek } = useAudio();
+  const { toggle, seek, previous } = useAudio();
   const {
     songsFolder, setSongsFolder, setTracks, setIsScanning, isScanning,
     showSettings, setShowSettings, showLibrary, isSphereMode, toggleSphereMode,
@@ -98,7 +115,7 @@ export default function App() {
   if (isSphereMode) {
     return (
       <div className="app sphere-mode">
-        <SphereView onToggle={toggle} onSeek={seek} />
+        <SphereView onToggle={toggle} onSeek={seek} onPrevious={previous} />
         <button
           className="sphere-exit-btn"
           onClick={toggleSphereMode}
@@ -110,7 +127,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <div className="titlebar" data-tauri-drag-region>
+      <div className="titlebar" onMouseDown={startTitlebarDrag}>
         <span className="titlebar-title">osu! player</span>
         <div className="titlebar-actions">
           <button className="titlebar-btn" onClick={toggleSphereMode} title="Sphere mode">◎</button>
@@ -129,11 +146,12 @@ export default function App() {
           <Settings onScan={() => handleScan(songsFolder)} isScanning={isScanning} />
         ) : (
           <>
-            {showLibrary && <Library />}
-            <PlayerBar onToggle={toggle} onSeek={seek} />
+            {showLibrary ? <Library /> : <Stage />}
+            <PlayerBar onToggle={toggle} onSeek={seek} onPrevious={previous} showVisual={showLibrary} />
           </>
         )}
       </div>
+      <ResizeHandles />
     </div>
   );
 }

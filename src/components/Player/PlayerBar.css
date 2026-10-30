@@ -56,8 +56,45 @@
   text-shadow: 0 1px 4px color-mix(in srgb, var(--shade) 80%, transparent);
 }
 
+/* Même effacement que dans la sphère (voir useAutoHide) : sans activité, les
+   contrôles disparaissent et le voile s'allège pour laisser voir la vidéo ou
+   le visualiseur. */
+.player-bar > .player-cover,
+.player-bar > .player-info,
+.player-bar > .player-progress,
+.player-bar > .player-controls,
+.player-bar > .player-extras,
+.player-bar > .player-bg-overlay,
+.player-bar > .player-visualizer {
+  transition: opacity 0.4s ease;
+}
+
+/* Derrière les contrôles, en retrait pour les laisser lisibles ; en entier
+   quand ils s'effacent. */
+.player-visualizer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0.5;
+}
+.player-bar.controls-hidden > .player-visualizer {
+  opacity: 1;
+}
+.player-bar.controls-hidden > .player-cover,
+.player-bar.controls-hidden > .player-info,
+.player-bar.controls-hidden > .player-progress,
+.player-bar.controls-hidden > .player-controls,
+.player-bar.controls-hidden > .player-extras {
+  opacity: 0;
+  /* Invisibles, ils ne doivent pas capter le clic qui réveille l'affichage. */
+  pointer-events: none;
+}
+.player-bar.controls-hidden > .player-bg-overlay {
+  opacity: 0.15;
+}
+
 /* Tout le contenu passe au-dessus du bg */
-.player-bar > *:not(.player-bg):not(.player-bg-overlay):not(.player-video) {
+.player-bar > *:not(.player-bg):not(.player-bg-overlay):not(.player-video):not(.player-visualizer) {
   position: relative;
   z-index: 2;
 }

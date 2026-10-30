@@ -1,9 +1,11 @@
-import { useMemo, useState, type MouseEvent } from 'react';
-import { usePlayerStore } from '@/stores/playerStore';
+import { useMemo, type MouseEvent } from 'react';
+import { usePlayerStore, visibleTracks } from '@/stores/playerStore';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
-import { BeatmapVideo, hasVideo } from '@/components/BeatmapVideo/BeatmapVideo';
+import { useAutoHide } from '@/hooks/useAutoHide';
+import { Visualizer } from '@/components/Visualizer/Visualizer';
+import { BeatmapVideo, useVideoTrack } from '@/components/BeatmapVideo/BeatmapVideo';
 import type { Track } from '@/types';
 import './SphereView.css';
 
@@ -29,24 +31,23 @@ function startWindowDrag(e: MouseEvent) {
 interface Props {
   onToggle: () => void;
   onSeek: (ratio: number) => void;
+  onPrevious: () => void;
 }
 
-export function SphereView({ onToggle, onSeek }: Props) {
+export function SphereView({ onToggle, onSeek, onPrevious }: Props) {
+  const store = usePlayerStore();
   const {
     tracks, searchQuery, videoOnly, currentTrack, status, progress,
-    isShuffled, repeatMode, setCurrentTrack, nextTrack, prevTrack,
-    cycleRepeat, toggleShuffle,
-  } = usePlayerStore();
+    isShuffled, repeatMode, setCurrentTrack, nextTrack,
+    cycleRepeat, toggleShuffle, hideControlsOverVideo, showVisualizer,
+  } = store;
 
-  const filtered = useMemo(() => {
-    const q = searchQuery.toLowerCase();
-    // Le filtre vidéo de la bibliothèque vaut aussi ici : « suivant » ne
-    // parcourt que ces pistes, la liste doit montrer les mêmes.
-    const base = videoOnly ? tracks.filter(t => t.videoPath) : tracks;
-    return q ? base.filter(t =>
-      t.title.toLowerCase().includes(q) || t.artist.toLowerCase().includes(q)
-    ) : base;
-  }, [tracks, searchQuery, videoOnly]);
+  // La vue de la bibliothèque (onglet, recherche, filtres) : « suivant » ne
+  // parcourt qu'elle, la sphère doit montrer les mêmes pistes.
+  const filtered = useMemo(
+    () => visibleTracks(store),
+    [tracks, searchQuery, videoOnly, store.bpmFilter, store.favoriteIds, store.libraryTab, store.activePlaylistId, store.playlists],
+  );
 
   const { containerRef, start, end, totalHeight, offsetTop } =
     useVirtualRows<HTMLDivElement>(filtered.length, SPHERE_TRACK_HEIGHT);
@@ -55,11 +56,11 @@ export function SphereView({ onToggle, onSeek }: Props) {
   const bgRaw = currentTrack?.backgroundPath ?? currentTrack?.coverPath ?? null;
   const bgUrl = bgRaw ? convertFileSrc(bgRaw) : null;
 
-  // Codec non pris en charge par la webview : on retombe sur l'image de fond.
-  const [failedVideo, setFailedVideo] = useState<string | null>(null);
-  const videoTrack = hasVideo(currentTrack) && currentTrack.videoPath !== failedVideo
-    ? currentTrack
-    : null;
+  const { videoTrack, markUnavailable } = useVideoTrack(currentTrack);
+  const visualizer = showVisualizer && !!currentTrack && !currentTrack.videoPath;
+  const visualFocus = (!!videoTrack || visualizer) && hideControlsOverVideo;
+  // En pause, les contrôles restent : c'est pour s'en servir qu'on s'arrête.
+  const { hidden: controlsHidden, handlers: autoHide } = useAutoHide(visualFocus && status === 'playing');
 
   const formatTime = (secs?: number) => {
     if (!secs) return '0:00';
@@ -69,18 +70,23 @@ export function SphereView({ onToggle, onSeek }: Props) {
   const elapsed = currentTrack?.duration ? progress * currentTrack.duration : 0;
 
   return (
-    <div className={`sphere-view ${videoTrack ? 'has-video' : ''}`} onMouseDown={startWindowDrag}>
+    <div
+      className={`sphere-view ${videoTrack ? 'has-video' : ''} ${visualFocus ? 'visual-focus' : ''} ${controlsHidden ? 'controls-hidden' : ''}`}
+      {...autoHide}
+      onMouseDown={(e) => { autoHide.onMouseDown?.(); startWindowDrag(e); }}
+    >
       {videoTrack ? (
         <BeatmapVideo
           key={videoTrack.id}
           track={videoTrack}
           className="sphere-video"
-          onUnavailable={() => setFailedVideo(videoTrack.videoPath)}
+          onUnavailable={markUnavailable}
         />
       ) : bgUrl && (
         <div className="sphere-bg" style={{ backgroundImage: `url("${bgUrl}")` }} />
       )}
       <div className="sphere-bg-overlay" />
+      {visualizer && <Visualizer variant="ring" className="sphere-visualizer" />}
 
       {/* Track list */}
       <div className="sphere-list" ref={containerRef}>
@@ -126,7 +132,7 @@ export function SphereView({ onToggle, onSeek }: Props) {
       {/* Controls */}
       <div className="sphere-controls">
         <button className={`sphere-btn sm ${isShuffled ? 'active' : ''}`} onClick={toggleShuffle}>⇄</button>
-        <button className="sphere-btn" onClick={prevTrack}>⏮</button>
+        <button className="sphere-btn" onClick={onPrevious}>⏮</button>
         <button className="sphere-btn play" onClick={onToggle}>
           {status === 'loading'
             ? <span style={{ animation: 'spin 1s linear infinite', display: 'inline-block' }}>◌</span>

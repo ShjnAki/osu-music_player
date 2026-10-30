@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Track, PlayerStatus, RepeatMode, Theme, Playlist } from '@/types';
+import type { Track, PlayerStatus, RepeatMode, Theme, Playlist, LibraryTab } from '@/types';
 
 interface PlayerState {
   tracks: Track[];
@@ -12,6 +12,8 @@ interface PlayerState {
   favoriteIds: Set<string>;
   playlists: Playlist[];
   activePlaylistId: string | null;
+  /** Onglet de la bibliothèque : il délimite aussi ce que « suivant » parcourt. */
+  libraryTab: LibraryTab;
   songsFolder: string;
   isScanning: boolean;
   currentTrack: Track | null;
@@ -27,6 +29,10 @@ interface PlayerState {
   showLibrary: boolean;
   showSettings: boolean;
   isSphereMode: boolean;
+  /** Efface les contrôles posés sur une vidéo quand on ne s'en sert pas, pour la laisser voir. */
+  hideControlsOverVideo: boolean;
+  /** Visualiseur pour les pistes sans vidéo ; il fait passer leur son par Web Audio. */
+  showVisualizer: boolean;
 
   setTracks: (tracks: Track[]) => void;
   setSearchQuery: (q: string) => void;
@@ -39,6 +45,7 @@ interface PlayerState {
   addToPlaylist: (playlistId: string, trackId: string) => void;
   removeFromPlaylist: (playlistId: string, trackId: string) => void;
   setActivePlaylist: (id: string | null) => void;
+  setLibraryTab: (tab: LibraryTab) => void;
   setSongsFolder: (path: string) => void;
   setIsScanning: (v: boolean) => void;
   setCurrentTrack: (track: Track | null) => void;
@@ -53,6 +60,8 @@ interface PlayerState {
   setShowLibrary: (v: boolean) => void;
   setShowSettings: (v: boolean) => void;
   toggleSphereMode: () => void;
+  setHideControlsOverVideo: (v: boolean) => void;
+  setShowVisualizer: (v: boolean) => void;
   nextTrack: () => void;
   prevTrack: () => void;
 }
@@ -79,9 +88,20 @@ export function filterTracks(
   return result;
 }
 
-function visibleTracks(s: PlayerState): Track[] {
-  const playlist = s.playlists.find(p => p.id === s.activePlaylistId);
-  return filterTracks(s.tracks, s.searchQuery, s.bpmFilter, s.favoritesOnly, s.favoriteIds, playlist?.trackIds ?? null, s.videoOnly);
+/**
+ * Pistes de la vue en cours de la bibliothèque : celles qu'elle affiche, et
+ * donc celles que « suivant », « précédent » et le préchargement parcourent.
+ * L'onglet compte : une playlist ouverte puis quittée ne s'applique plus.
+ */
+export function visibleTracks(s: PlayerState): Track[] {
+  const playlist = s.libraryTab === 'playlists'
+    ? s.playlists.find(p => p.id === s.activePlaylistId)
+    : undefined;
+  return filterTracks(
+    s.tracks, s.searchQuery, s.bpmFilter,
+    s.libraryTab === 'favorites', s.favoriteIds,
+    playlist?.trackIds ?? null, s.videoOnly,
+  );
 }
 
 /**
@@ -102,11 +122,13 @@ export const usePlayerStore = create<PlayerState>()(
     (set, get) => ({
       tracks: [], searchQuery: '', bpmFilter: null, videoOnly: false,
       favoritesOnly: false, favoriteIds: new Set<string>(),
-      playlists: [], activePlaylistId: null,
+      playlists: [], activePlaylistId: null, libraryTab: 'all',
       songsFolder: '', isScanning: false,
       currentTrack: null, status: 'idle', progress: 0, audioTime: 0,
       volume: 0.8, isMuted: false, isShuffled: false, repeatMode: 'none',
       currentTheme: null, showLibrary: true, showSettings: false, isSphereMode: false,
+      hideControlsOverVideo: true,
+      showVisualizer: true,
 
       setTracks: (tracks) => set({ tracks }),
       setSearchQuery: (searchQuery) => set({ searchQuery }),
@@ -140,6 +162,7 @@ export const usePlayerStore = create<PlayerState>()(
         ),
       })),
       setActivePlaylist: (activePlaylistId) => set({ activePlaylistId }),
+      setLibraryTab: (libraryTab) => set({ libraryTab }),
       setSongsFolder: (songsFolder) => set({ songsFolder }),
       setIsScanning: (isScanning) => set({ isScanning }),
       setCurrentTrack: (currentTrack) => set({ currentTrack, progress: 0, audioTime: 0 }),
@@ -157,6 +180,8 @@ export const usePlayerStore = create<PlayerState>()(
       setShowLibrary: (showLibrary) => set({ showLibrary }),
       setShowSettings: (showSettings) => set({ showSettings }),
       toggleSphereMode: () => set((s) => ({ isSphereMode: !s.isSphereMode })),
+      setHideControlsOverVideo: (hideControlsOverVideo) => set({ hideControlsOverVideo }),
+      setShowVisualizer: (showVisualizer) => set({ showVisualizer }),
 
       nextTrack: () => {
         const state = get();
@@ -167,13 +192,13 @@ export const usePlayerStore = create<PlayerState>()(
         if (next) set({ currentTrack: next, progress: 0, audioTime: 0, status: 'loading' });
       },
 
+      // Revenir au début du morceau en cours relève de useAudio, qui tient
+      // l'élément audio : ici, seulement changer de piste.
       prevTrack: () => {
         const state = get();
-        const { currentTrack, progress } = state;
         const visible = visibleTracks(state);
         if (!visible.length) return;
-        if (progress > 0.05) { set({ progress: 0, audioTime: 0, status: 'loading' }); return; }
-        const idx = visible.findIndex((t) => t.id === currentTrack?.id);
+        const idx = visible.findIndex((t) => t.id === state.currentTrack?.id);
         const prevIdx = idx > 0 ? idx - 1 : visible.length - 1;
         set({ currentTrack: visible[prevIdx], progress: 0, audioTime: 0, status: 'loading' });
       },
@@ -188,6 +213,8 @@ export const usePlayerStore = create<PlayerState>()(
         currentTheme: s.currentTheme,
         favoriteIds: Array.from(s.favoriteIds),
         playlists: s.playlists,
+        hideControlsOverVideo: s.hideControlsOverVideo,
+        showVisualizer: s.showVisualizer,
       }),
       merge: (persisted: any, current) => ({
         ...current,

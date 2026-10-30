@@ -136,8 +136,11 @@ fn handle(mut stream: TcpStream, config: &Config) -> io::Result<()> {
     };
     let length = if size == 0 { 0 } else { end - start + 1 };
 
+    // CORS ouvert : le visualiseur analyse le son par Web Audio, qui ne reçoit
+    // que du silence d'une source d'une autre origine sans cet en-tête. L'accès
+    // reste fermé par le jeton et l'en-tête Host, pas par l'origine.
     let mut head = format!(
-        "HTTP/1.1 {status}\r\nContent-Type: {}\r\nContent-Length: {length}\r\nAccept-Ranges: bytes\r\nCache-Control: no-store\r\nConnection: close\r\n",
+        "HTTP/1.1 {status}\r\nContent-Type: {}\r\nContent-Length: {length}\r\nAccept-Ranges: bytes\r\nAccess-Control-Allow-Origin: *\r\nCache-Control: no-store\r\nConnection: close\r\n",
         content_type(&path)
     );
     if status.starts_with("206") {
@@ -292,6 +295,14 @@ mod tests {
         assert!(head.contains("Content-Range: bytes 10-14/100"), "{head}");
         assert!(head.contains("Content-Type: audio/mpeg"), "{head}");
         assert_eq!(body, vec![10, 11, 12, 13, 14]);
+    }
+
+    #[test]
+    fn serveur_autorise_l_analyse_du_son_par_la_page() {
+        let f = fixture("cors");
+        let path = f.url_path(&f.dir.join("Songs/audio.mp3"));
+        let (head, _) = f.get(&path, &f.host(), Some("bytes=0-9"));
+        assert!(head.contains("Access-Control-Allow-Origin: *"), "{head}");
     }
 
     #[test]

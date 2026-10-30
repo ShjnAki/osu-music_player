@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { usePlayerStore, filterTracks } from '@/stores/playerStore';
+import { usePlayerStore, visibleTracks } from '@/stores/playerStore';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
 import type { Track } from '@/types';
 import './Library.css';
@@ -7,8 +7,6 @@ import './Library.css';
 // Doit égaler la hauteur rendue de .track-row : la virtualisation calcule les
 // positions sans mesurer le DOM.
 const TRACK_ROW_HEIGHT = 47;
-
-type Tab = 'all' | 'favorites' | 'playlists';
 
 // Dessinée plutôt qu'un emoji 🎬 : sans police d'emoji (courant sous Linux),
 // celui-ci s'affiche en carré vide.
@@ -24,33 +22,27 @@ function VideoIcon() {
 }
 
 export function Library() {
+  const store = usePlayerStore();
   const {
     tracks, searchQuery, bpmFilter, videoOnly, favoriteIds, isScanning,
-    playlists, activePlaylistId,
+    playlists, activePlaylistId, libraryTab: tab, setLibraryTab: setTab,
     currentTrack, setSearchQuery, setCurrentTrack,
     setBpmFilter, setVideoOnly, toggleFavorite,
     createPlaylist, deletePlaylist, addToPlaylist, removeFromPlaylist, setActivePlaylist,
-  } = usePlayerStore();
+  } = store;
 
-  const [tab, setTab] = useState<Tab>('all');
   const [showBpmFilter, setShowBpmFilter] = useState(false);
   const [newPlaylistName, setNewPlaylistName] = useState('');
   const [addingToPlaylist, setAddingToPlaylist] = useState<string | null>(null);
 
-  const activeFavOnly = tab === 'favorites';
   const activePlaylist = tab === 'playlists' ? playlists.find(p => p.id === activePlaylistId) ?? null : null;
 
-  const filtered = useMemo(() => {
-    return filterTracks(
-      tracks,
-      searchQuery,
-      bpmFilter,
-      activeFavOnly,
-      favoriteIds,
-      activePlaylist?.trackIds ?? null,
-      videoOnly,
-    );
-  }, [tracks, searchQuery, bpmFilter, activeFavOnly, favoriteIds, activePlaylist, videoOnly]);
+  // La même sélection que celle que parcourt « suivant » : la liste affichée
+  // et l'ordre de lecture ne peuvent plus diverger.
+  const filtered = useMemo(
+    () => visibleTracks(store),
+    [tracks, searchQuery, bpmFilter, videoOnly, favoriteIds, tab, activePlaylistId, playlists],
+  );
 
   const hasVideos = useMemo(() => tracks.some(t => t.videoPath), [tracks]);
 

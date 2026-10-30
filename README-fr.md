@@ -21,7 +21,8 @@ Tu préfères compiler toi-même ? Voir [Démarrage rapide](#démarrage-rapide).
 - 🔊 Contrôle du volume
 - 🏷️ Lecture des tags ID3 (titre, artiste, BPM)
 - 🖼️ Pochette d'album depuis le dossier de la beatmap
-- 🎬 Vidéos des beatmaps, muettes et calées sur la musique
+- 🎬 Vidéos des beatmaps, muettes et calées sur la musique, en grand quand la liste est masquée (☰) ; les contrôles posés dessus s'effacent quand on ne s'en sert pas
+- 🎛️ Visualiseur du spectre pour les pistes sans vidéo : des barres dans la fenêtre, un anneau dans la sphère
 - 💾 Paramètres sauvegardés entre les sessions
 - 🪟 Fenêtre sans bordure, déplaçable
 
@@ -87,20 +88,21 @@ osu-player/
 
 ## Créer un thème personnalisé
 
-Copie n'importe quel fichier `themes/*.json` et modifie les variables CSS :
+Les thèmes sont définis dans `src/hooks/useTheme.ts`, sous forme d'objets de variables CSS. Pour en ajouter un, ajoute une entrée au tableau `BUILTIN_THEMES` :
 
-```json
+```ts
 {
-  "id": "mon-theme",
-  "name": "Mon Thème",
-  "author": "moi",
-  "variables": {
+  id: "mon-theme",
+  name: "Mon Thème",
+  variables: {
     "--bg-primary": "#0a0a0a",
     "--accent": "#00ff88",
-    ...
+    // ...voir ThemeVariables dans src/types/index.ts
   }
 }
 ```
+
+Les fichiers du dossier `themes/` ne sont pas chargés par l'appli.
 
 ## Feuille de route
 
@@ -113,6 +115,12 @@ Copie n'importe quel fichier `themes/*.json` et modifie les variables CSS :
 - [ ] Android / iOS (Tauri 2.0 mobile)
 - [ ] Visualiseur de forme d'onde
 
+## Crédits
+
+Créé et maintenu par **Shin Aki** — projet d'origine : [github.com/ShjnAki/osu-music_player](https://github.com/ShjnAki/osu-music_player).
+
+Si tu utilises, forkes ou partages l'appli, merci de créditer le projet d'origine avec un lien vers ce dépôt. Et si elle te plaît, une ⭐ sur le dépôt est la meilleure façon de dire merci !
+
 ## Licence
 
-MIT — Fork-le, modifie-le, partage-le ! 🎮
+MIT — Fork-le, modifie-le, partage-le ! 🎮 Voir [LICENSE](LICENSE) : garde sa mention de copyright dans tes copies et tes forks.

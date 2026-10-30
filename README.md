@@ -25,7 +25,8 @@ Want to build it yourself instead? See [Getting Started](#getting-started).
 - 🔊 Volume control
 - 🏷️ ID3 tag reading (title, artist) with folder-name fallback
 - 🖼️ Album art and beatmap background images
-- 🎬 Beatmap videos, muted and synced to the music
+- 🎬 Beatmap videos, muted and synced to the music, shown large when you hide the library (☰); the controls over them fade out while you're not using them
+- 🎛️ Spectrum visualizer for tracks without a video: bars in the window, a ring in the sphere
 - 🔵 Sphere mode — circular always-on-top window with track list inside
 - ⚡ Metadata cache: first scan is slow, subsequent launches load instantly
 - 💾 Settings persisted between sessions
@@ -89,7 +90,7 @@ osu-player/
 
 ## Sphere Mode
 
-Click **◎** in the titlebar to switch to sphere mode: a circular 360×360 window that floats always-on-top. The beatmap background, or its video, fills the sphere. Drag the sphere from any free spot to move it. Click **⊡** to return to normal mode.
+Click **◎** in the titlebar to switch to sphere mode: a circular 360×360 window that floats always-on-top. The beatmap background, or its video, fills the sphere. Drag the sphere from any free spot to move it. When a video is playing, the list and controls fade out after a moment without moving the pointer, so you can watch it; they come back as soon as the pointer moves (Settings → Videos turns this off). Click **⊡** to return to normal mode.
 
 ## Creating a Custom Theme
 
@@ -107,6 +108,12 @@ Themes are defined in `src/hooks/useTheme.ts` as objects with CSS custom propert
 }
 ```
 
+## Credits
+
+Created and maintained by **Shin Aki** — original project: [github.com/ShjnAki/osu-music_player](https://github.com/ShjnAki/osu-music_player).
+
+If you use, fork or share this app, please credit the original project with a link back to this repository. And if you like it, a ⭐ on the repo is the best way to say thanks!
+
 ## License
 
-MIT — Fork it, mod it, share it! 🎮
+MIT — Fork it, mod it, share it! 🎮 See [LICENSE](LICENSE): keep its copyright notice in your copies and forks.

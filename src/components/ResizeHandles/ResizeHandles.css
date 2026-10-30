@@ -1,0 +1,35 @@
+/* src/components/ResizeHandles/ResizeHandles.css */
+.resize-edge {
+  position: fixed;
+  z-index: 1000;
+}
+/* Assez fines pour ne pas gêner ce qui longe le bord, assez larges pour être
+   trouvées sans viser. */
+.resize-north, .resize-south { left: 12px; right: 12px; height: 4px; cursor: ns-resize; }
+.resize-east, .resize-west { top: 12px; bottom: 12px; width: 4px; cursor: ew-resize; }
+.resize-north { top: 0; }
+.resize-south { bottom: 0; }
+.resize-east { right: 0; }
+.resize-west { left: 0; }
+.resize-northeast, .resize-northwest, .resize-southeast, .resize-southwest { width: 12px; height: 12px; }
+.resize-northwest { top: 0; left: 0; cursor: nwse-resize; }
+.resize-southeast { bottom: 0; right: 0; cursor: nwse-resize; }
+.resize-northeast { top: 0; right: 0; cursor: nesw-resize; }
+.resize-southwest { bottom: 0; left: 0; cursor: nesw-resize; }
+
+/* La poignée visible : le curseur ne se découvre qu'en passant au bord. */
+.resize-grip {
+  position: fixed;
+  right: 3px;
+  bottom: 3px;
+  z-index: 1001;
+  width: 12px;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  opacity: 0.7;
+  cursor: nwse-resize;
+}
+.resize-grip:hover { color: var(--accent); opacity: 1; }

@@ -1,0 +1,10 @@
+/* src/components/Visualizer/Visualizer.css */
+.visualizer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  /* Lue par le canvas pour dessiner : la couleur reste celle du thème. */
+  color: var(--accent);
+}

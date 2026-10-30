@@ -1,0 +1,35 @@
+/* src/components/Stage/Stage.css */
+.stage {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+  /* Fond de salle de cinéma pour les bandes autour de la vidéo, même sous un
+     thème clair ou translucide. */
+  background: color-mix(in srgb, var(--shade) 90%, transparent);
+}
+
+/* contain et non cover : la vidéo est là pour être regardée en entier, quitte
+   à laisser des bandes, plutôt que rognée sur les côtés. */
+.stage-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  animation: bgFadeIn 0.5s ease;
+}
+
+.stage-image {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  animation: bgFadeIn 0.5s ease;
+}
+
+/* Assombrie sous le visualiseur : des barres claires sur une image claire ne
+   se verraient pas. Un filtre sur une image fixe ne coûte qu'une fois. */
+.stage.has-visualizer .stage-image {
+  filter: brightness(0.5);
+}

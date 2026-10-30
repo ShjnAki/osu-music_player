@@ -1,5 +1,5 @@
 // src/components/BeatmapVideo/BeatmapVideo.tsx
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePlayerStore } from '@/stores/playerStore';
 import { localMediaUrl } from '@/lib/localMedia';
 import type { Track } from '@/types';
@@ -13,6 +13,18 @@ type TrackWithVideo = Track & { videoPath: string };
 
 export function hasVideo(track: Track | null): track is TrackWithVideo {
   return !!track?.videoPath;
+}
+
+/**
+ * Piste à montrer en vidéo, ou null : sans vidéo, ou si la webview n'a pas su
+ * la lire (codec), auquel cas l'image de fond reprend sa place.
+ */
+export function useVideoTrack(track: Track | null) {
+  const [failedVideo, setFailedVideo] = useState<string | null>(null);
+  const videoTrack = hasVideo(track) && track.videoPath !== failedVideo ? track : null;
+  const videoPath = videoTrack?.videoPath ?? null;
+  const markUnavailable = useCallback(() => setFailedVideo(videoPath), [videoPath]);
+  return { videoTrack, markUnavailable };
 }
 
 interface Props {

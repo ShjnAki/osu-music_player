@@ -1,10 +1,17 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { usePlayerStore, predictNextTrack } from '@/stores/playerStore';
 import { localMediaUrl } from '@/lib/localMedia';
+import { primeAudioAnalysis, routeThroughAnalyser, setPlaybackVolume } from '@/lib/audioAnalysis';
+import type { Track } from '@/types';
 
 // Laisse la piste courante finir de démarrer avant d'ouvrir la suivante, pour
 // que les deux lectures disque ne se concurrencent pas.
 const PRELOAD_DELAY_MS = 1000;
+
+// Passé ce point du morceau, « précédent » revient à son début au lieu de
+// changer de piste, comme sur la plupart des lecteurs ; c'est le seuil que
+// l'appli appliquait déjà.
+const RESTART_AFTER_RATIO = 0.05;
 
 // Un <audio> natif plutôt que Howler : en mode html5, Howler fige la durée au
 // premier « prêt » et programme la fin de piste par minuterie. Si la webview
@@ -16,10 +23,15 @@ interface OpenTrack {
   release: () => void;
 }
 
-async function openTrack(path: string): Promise<OpenTrack> {
+/** Le visualiseur remplace la vidéo : seules les pistes qui n'en ont pas sont analysées. */
+const wantsAnalysis = (track: Track) => usePlayerStore.getState().showVisualizer && !track.videoPath;
+
+async function openTrack(track: Track): Promise<OpenTrack> {
   const audio = new Audio();
   audio.preload = 'auto';
-  audio.src = await localMediaUrl(path);
+  // Avant src : une source chargée sans CORS ne livre à Web Audio que du silence.
+  if (wantsAnalysis(track)) audio.crossOrigin = 'anonymous';
+  audio.src = await localMediaUrl(track.path);
   return {
     audio,
     release: () => {
@@ -45,7 +57,7 @@ function preloadNextTrack() {
   const next = predictNextTrack(usePlayerStore.getState());
   if (!next || preloaded?.trackId === next.id) return;
   preloaded?.track.then((t) => t.release(), () => {});
-  const entry = { trackId: next.id, track: openTrack(next.path) };
+  const entry = { trackId: next.id, track: openTrack(next) };
   preloaded = entry;
   // Une piste illisible ne doit pas être adoptée : elle resterait muette. Si
   // elle l'est déjà, c'est l'effet de lecture qui gère l'erreur.
@@ -68,7 +80,19 @@ export function useAudio() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const releaseRef = useRef<(() => void) | null>(null);
   const progressRef = useRef<number>(0);
-  const { currentTrack, volume, isMuted, setStatus, setPlayback, nextTrack } = usePlayerStore();
+  const { currentTrack, volume, isMuted, setStatus, setPlayback, nextTrack, prevTrack } = usePlayerStore();
+
+  // Le contexte audio doit naître d'un geste de l'utilisateur pour démarrer :
+  // le clic qui lance une piste suffit.
+  useEffect(() => {
+    const prime = () => { if (usePlayerStore.getState().showVisualizer) primeAudioAnalysis(); };
+    document.addEventListener('pointerdown', prime, true);
+    document.addEventListener('keydown', prime, true);
+    return () => {
+      document.removeEventListener('pointerdown', prime, true);
+      document.removeEventListener('keydown', prime, true);
+    };
+  }, []);
 
   const cleanup = useCallback(() => {
     releaseRef.current?.();
@@ -97,9 +121,26 @@ export function useAudio() {
       audioRef.current = audio;
       releaseRef.current = track.release;
 
+      // Seulement un élément chargé en CORS : préchargé avant un changement de
+      // l'option, il ne l'est peut-être pas, et l'analyser le rendrait muet.
+      if (wantsAnalysis(currentTrack) && audio.crossOrigin === 'anonymous') {
+        routeThroughAnalyser(audio).then((unroute) => {
+          if (!unroute) return;
+          if (cancelled) { unroute(); return; }
+          releaseRef.current = () => { unroute(); track.release(); };
+        });
+      }
+
       const { isMuted: muted, volume: vol } = usePlayerStore.getState();
       audio.volume = muted ? 0 : vol;
-      audio.addEventListener('ended', () => nextTrack(), { signal });
+      audio.addEventListener('ended', () => {
+        if (usePlayerStore.getState().repeatMode === 'one') {
+          audio.currentTime = 0;
+          audio.play().catch(() => {});
+        } else {
+          nextTrack();
+        }
+      }, { signal });
       audio.addEventListener('error', () => setStatus('error'), { signal });
       audio.addEventListener('play', () => setStatus('playing'), { signal });
       audio.addEventListener('pause', () => { if (!audio.ended) setStatus('paused'); }, { signal });
@@ -127,7 +168,7 @@ export function useAudio() {
       }, 500);
     };
 
-    (takePreloaded(currentTrack.id) ?? openTrack(currentTrack.path)).then(
+    (takePreloaded(currentTrack.id) ?? openTrack(currentTrack)).then(
       adopt,
       () => { if (!cancelled) setStatus('error'); },
     );
@@ -137,7 +178,7 @@ export function useAudio() {
 
   useEffect(() => {
     if (!audioRef.current) return;
-    audioRef.current.volume = isMuted ? 0 : volume;
+    setPlaybackVolume(audioRef.current, isMuted ? 0 : volume);
   }, [volume, isMuted]);
 
   const play = useCallback(() => { audioRef.current?.play().catch(() => {}); }, []);
@@ -148,11 +189,20 @@ export function useAudio() {
     audio.currentTime = ratio * audio.duration;
     setPlayback(ratio, ratio * audio.duration);
   }, []);
+  const previous = useCallback(() => {
+    const audio = audioRef.current;
+    if (audio && audio.duration > 0 && audio.currentTime > audio.duration * RESTART_AFTER_RATIO) {
+      audio.currentTime = 0;
+      setPlayback(0, 0);
+      return;
+    }
+    prevTrack();
+  }, []);
   const toggle = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
     if (audio.paused) play(); else pause();
   }, [play, pause]);
 
-  return { play, pause, toggle, seek };
+  return { play, pause, toggle, seek, previous };
 }
