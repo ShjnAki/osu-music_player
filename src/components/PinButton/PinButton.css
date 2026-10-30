@@ -1,0 +1,42 @@
+/* src/components/PinButton/PinButton.css */
+
+.pin-hint {
+  position: fixed;
+  z-index: 30;
+  max-width: 250px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--text-primary);
+  /* Le fond tertiaire sur de l'ombre : celui du thème Glass est translucide,
+     et le message se lirait par-dessus ce qu'il recouvre. */
+  background: linear-gradient(var(--bg-tertiary), var(--bg-tertiary)), var(--shade);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--shade) 45%, transparent);
+  cursor: pointer;
+  /* En opacité seule : fadeIn anime transform, qui décentrerait la version
+     de la sphère. */
+  animation: bgFadeIn 0.2s ease;
+}
+.pin-hint kbd {
+  font: inherit;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* Préfixées : .titlebar existe déjà, et sa mise en page s'appliquait au
+   message. */
+.pin-hint-titlebar {
+  top: 40px;
+  right: 8px;
+}
+
+/* Sous le bouton, dans la partie haute du cercle, la plus large. */
+.pin-hint-sphere {
+  top: 44px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 230px;
+  text-align: center;
+}

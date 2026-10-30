@@ -27,7 +27,8 @@ Want to build it yourself instead? See [Getting Started](#getting-started).
 - 🖼️ Album art and beatmap background images
 - 🎬 Beatmap videos, muted and synced to the music, shown large when you hide the library (☰); the controls over them fade out while you're not using them
 - 🎛️ Spectrum visualizer for tracks without a video: bars in the window, a ring in the sphere
-- 🔵 Sphere mode — circular always-on-top window with track list inside
+- 🔵 Sphere mode — circular window with track list inside
+- 📌 Optional always-on-top pin, in the titlebar and the sphere (on Wayland, apps can't pin themselves: use the window menu, Alt+Space on GNOME → Always on Top)
 - ⚡ Metadata cache: first scan is slow, subsequent launches load instantly
 - 💾 Settings persisted between sessions
 - 🪟 Frameless, draggable window
@@ -90,7 +91,7 @@ osu-player/
 
 ## Sphere Mode
 
-Click **◎** in the titlebar to switch to sphere mode: a circular 360×360 window that floats always-on-top. The beatmap background, or its video, fills the sphere. Drag the sphere from any free spot to move it. When a video is playing, the list and controls fade out after a moment without moving the pointer, so you can watch it; they come back as soon as the pointer moves (Settings → Videos turns this off). Click **⊡** to return to normal mode.
+Click **◎** in the titlebar to switch to sphere mode: a circular 360×360 window. The pin in its top-left corner, like the one in the titlebar, keeps the window above the others. The beatmap background, or its video, fills the sphere. Drag the sphere from any free spot to move it. When a video is playing, the list and controls fade out after a moment without moving the pointer, so you can watch it; they come back as soon as the pointer moves (Settings → Videos turns this off). Click **⊡** to return to normal mode.
 
 ## Creating a Custom Theme
 

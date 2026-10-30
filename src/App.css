@@ -36,6 +36,10 @@
 .titlebar-btn:hover { 
     background: rgba(255,255,255,0.1); 
     color: var(--text-primary); }
+.titlebar-btn.active { color: var(--accent); }
+/* À la taille des caractères voisins (◎ — ×), pas plus grande comme dans la
+   barre de lecture. */
+.titlebar-btn .icon { width: 1em; height: 1em; }
 .app-body {
   display: flex;
   flex-direction: column;
@@ -52,7 +56,8 @@
   position: relative;
   overflow: visible;
 }
-.sphere-exit-btn {
+.sphere-exit-btn,
+.sphere-pin-btn {
   position: absolute;
   /* Dans le coin laissé libre par le cercle : à -10px, le bouton débordait
      d'une fenêtre qui a exactement la taille de la sphère et était rogné. */
@@ -72,7 +77,11 @@
   z-index: 10;
   transition: all 0.15s;
 }
-.sphere-exit-btn:hover { color: var(--text-primary); border-color: var(--accent); }
+.sphere-exit-btn:hover,
+.sphere-pin-btn:hover { color: var(--text-primary); border-color: var(--accent); }
+/* L'autre coin libre en haut, en miroir du bouton de sortie. */
+.sphere-pin-btn { right: auto; left: 10px; }
+.sphere-pin-btn.active { color: var(--accent); border-color: var(--accent); }
 
 .scan-error {
   display: flex;
