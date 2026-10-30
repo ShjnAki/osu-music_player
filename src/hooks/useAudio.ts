@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { usePlayerStore, predictNextTrack } from '@/stores/playerStore';
 import { localMediaUrl } from '@/lib/localMedia';
-import { primeAudioAnalysis, routeThroughAnalyser, setPlaybackVolume } from '@/lib/audioAnalysis';
+import { primeAudioAnalysis, analysePlayback } from '@/lib/audioAnalysis';
 import type { Track } from '@/types';
 
 // Laisse la piste courante finir de démarrer avant d'ouvrir la suivante, pour
@@ -29,8 +29,6 @@ const wantsAnalysis = (track: Track) => usePlayerStore.getState().showVisualizer
 async function openTrack(track: Track): Promise<OpenTrack> {
   const audio = new Audio();
   audio.preload = 'auto';
-  // Avant src : une source chargée sans CORS ne livre à Web Audio que du silence.
-  if (wantsAnalysis(track)) audio.crossOrigin = 'anonymous';
   audio.src = await localMediaUrl(track.path);
   return {
     audio,
@@ -121,13 +119,11 @@ export function useAudio() {
       audioRef.current = audio;
       releaseRef.current = track.release;
 
-      // Seulement un élément chargé en CORS : préchargé avant un changement de
-      // l'option, il ne l'est peut-être pas, et l'analyser le rendrait muet.
-      if (wantsAnalysis(currentTrack) && audio.crossOrigin === 'anonymous') {
-        routeThroughAnalyser(audio).then((unroute) => {
-          if (!unroute) return;
-          if (cancelled) { unroute(); return; }
-          releaseRef.current = () => { unroute(); track.release(); };
+      if (wantsAnalysis(currentTrack)) {
+        analysePlayback(audio, audio.src).then((stop) => {
+          if (!stop) return;
+          if (cancelled) { stop(); return; }
+          releaseRef.current = () => { stop(); track.release(); };
         });
       }
 
@@ -178,7 +174,7 @@ export function useAudio() {
 
   useEffect(() => {
     if (!audioRef.current) return;
-    setPlaybackVolume(audioRef.current, isMuted ? 0 : volume);
+    audioRef.current.volume = isMuted ? 0 : volume;
   }, [volume, isMuted]);
 
   const play = useCallback(() => { audioRef.current?.play().catch(() => {}); }, []);

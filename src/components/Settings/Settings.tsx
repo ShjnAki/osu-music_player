@@ -63,7 +63,7 @@ export function Settings({ onScan, isScanning }: Props) {
             />
             <span>
               Visualizer for tracks without a video
-              <small>The sound goes through Web Audio to be analysed. Turn this off if playback misbehaves.</small>
+              <small>A silent copy of the track is analysed through Web Audio; the sound you hear never goes through it.</small>
             </span>
           </label>
         </section>

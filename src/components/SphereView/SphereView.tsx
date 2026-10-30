@@ -6,6 +6,7 @@ import { useVirtualRows } from '@/hooks/useVirtualRows';
 import { useAutoHide } from '@/hooks/useAutoHide';
 import { Visualizer } from '@/components/Visualizer/Visualizer';
 import { BeatmapVideo, useVideoTrack } from '@/components/BeatmapVideo/BeatmapVideo';
+import { NextIcon, PauseIcon, PlayIcon, PreviousIcon, RepeatIcon, ShuffleIcon } from '@/components/Icons/Icons';
 import type { Track } from '@/types';
 import './SphereView.css';
 
@@ -131,16 +132,16 @@ export function SphereView({ onToggle, onSeek, onPrevious }: Props) {
 
       {/* Controls */}
       <div className="sphere-controls">
-        <button className={`sphere-btn sm ${isShuffled ? 'active' : ''}`} onClick={toggleShuffle}>⇄</button>
-        <button className="sphere-btn" onClick={onPrevious}>⏮</button>
-        <button className="sphere-btn play" onClick={onToggle}>
+        <button className={`sphere-btn sm ${isShuffled ? 'active' : ''}`} onClick={toggleShuffle} aria-label="Shuffle"><ShuffleIcon /></button>
+        <button className="sphere-btn" onClick={onPrevious} aria-label="Previous"><PreviousIcon /></button>
+        <button className="sphere-btn play" onClick={onToggle} aria-label={isPlaying ? 'Pause' : 'Play'}>
           {status === 'loading'
             ? <span style={{ animation: 'spin 1s linear infinite', display: 'inline-block' }}>◌</span>
-            : isPlaying ? '⏸' : '▶'}
+            : isPlaying ? <PauseIcon /> : <PlayIcon />}
         </button>
-        <button className="sphere-btn" onClick={nextTrack}>⏭</button>
-        <button className={`sphere-btn sm ${repeatMode !== 'none' ? 'active' : ''}`} onClick={cycleRepeat}>
-          {repeatMode === 'one' ? '🔂' : '🔁'}
+        <button className="sphere-btn" onClick={nextTrack} aria-label="Next"><NextIcon /></button>
+        <button className={`sphere-btn sm ${repeatMode !== 'none' ? 'active' : ''}`} onClick={cycleRepeat} aria-label="Repeat">
+          <RepeatIcon one={repeatMode === 'one'} />
         </button>
       </div>
     </div>

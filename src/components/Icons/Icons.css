@@ -1,0 +1,11 @@
+/* src/components/Icons/Icons.css */
+
+/* Taille tirée de la police du bouton : les règles existantes qui dimensionnaient
+   les caractères dimensionnent aussi les icônes. Un peu plus grande, car un
+   tracé remplit moins sa case qu'un glyphe emoji. */
+.icon {
+  width: 1.25em;
+  height: 1.25em;
+  display: block;
+  flex-shrink: 0;
+}
