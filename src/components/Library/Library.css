@@ -52,7 +52,10 @@
 .bpm-clear:hover { color: var(--text-primary); }
 
 /* Track list */
-.library-list { flex: 1; overflow-y: auto; padding: 4px 0; }
+.library-list { flex: 1; overflow-y: auto; padding: 4px 0;
+  /* Laisse le bord droit à la poignée de redimensionnement : collée au bord,
+     la barre de défilement serait recouverte et impossible à attraper. */
+  margin-right: 4px; }
 
 .track-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px 8px 14px; cursor: pointer; transition: background 0.1s; }
 .track-row:hover { background: var(--bg-secondary); }

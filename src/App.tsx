@@ -11,6 +11,7 @@ import { Library } from '@/components/Library/Library';
 import { Settings } from '@/components/Settings/Settings';
 import { SphereView } from '@/components/SphereView/SphereView';
 import { Stage } from '@/components/Stage/Stage';
+import { ResizeHandles } from '@/components/ResizeHandles/ResizeHandles';
 import '@/styles/globals.css';
 import './App.css';
 
@@ -150,6 +151,7 @@ export default function App() {
           </>
         )}
       </div>
+      <ResizeHandles />
     </div>
   );
 }
