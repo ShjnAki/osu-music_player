@@ -1,5 +1,5 @@
 import { useMemo, type MouseEvent } from 'react';
-import { usePlayerStore } from '@/stores/playerStore';
+import { usePlayerStore, visibleTracks } from '@/stores/playerStore';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
@@ -34,21 +34,19 @@ interface Props {
 }
 
 export function SphereView({ onToggle, onSeek, onPrevious }: Props) {
+  const store = usePlayerStore();
   const {
     tracks, searchQuery, videoOnly, currentTrack, status, progress,
     isShuffled, repeatMode, setCurrentTrack, nextTrack,
     cycleRepeat, toggleShuffle, hideControlsOverVideo,
-  } = usePlayerStore();
+  } = store;
 
-  const filtered = useMemo(() => {
-    const q = searchQuery.toLowerCase();
-    // Le filtre vidéo de la bibliothèque vaut aussi ici : « suivant » ne
-    // parcourt que ces pistes, la liste doit montrer les mêmes.
-    const base = videoOnly ? tracks.filter(t => t.videoPath) : tracks;
-    return q ? base.filter(t =>
-      t.title.toLowerCase().includes(q) || t.artist.toLowerCase().includes(q)
-    ) : base;
-  }, [tracks, searchQuery, videoOnly]);
+  // La vue de la bibliothèque (onglet, recherche, filtres) : « suivant » ne
+  // parcourt qu'elle, la sphère doit montrer les mêmes pistes.
+  const filtered = useMemo(
+    () => visibleTracks(store),
+    [tracks, searchQuery, videoOnly, store.bpmFilter, store.favoriteIds, store.libraryTab, store.activePlaylistId, store.playlists],
+  );
 
   const { containerRef, start, end, totalHeight, offsetTop } =
     useVirtualRows<HTMLDivElement>(filtered.length, SPHERE_TRACK_HEIGHT);
