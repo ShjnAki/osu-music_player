@@ -78,11 +78,6 @@ osu-player/
 │       ├── lib.rs            # Commandes Tauri : scan, cache, mode sphère, serveur média
 │       ├── osu_parse.rs      # Lecture des .osu : BPM, fond, vidéo
 │       └── media_server.rs   # Serveur HTTP local des médias (Linux)
-├── themes/                   # Fichiers de thèmes JSON
-│   ├── default.json
-│   ├── glass.json
-│   ├── sakura.json
-│   └── minimal.json
 └── tauri.conf.json
 ```
 
@@ -101,8 +96,6 @@ Les thèmes sont définis dans `src/hooks/useTheme.ts`, sous forme d'objets de v
   }
 }
 ```
-
-Les fichiers du dossier `themes/` ne sont pas chargés par l'appli.
 
 ## Feuille de route
 
