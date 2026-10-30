@@ -87,20 +87,21 @@ osu-player/
 
 ## Créer un thème personnalisé
 
-Copie n'importe quel fichier `themes/*.json` et modifie les variables CSS :
+Les thèmes sont définis dans `src/hooks/useTheme.ts`, sous forme d'objets de variables CSS. Pour en ajouter un, ajoute une entrée au tableau `BUILTIN_THEMES` :
 
-```json
+```ts
 {
-  "id": "mon-theme",
-  "name": "Mon Thème",
-  "author": "moi",
-  "variables": {
+  id: "mon-theme",
+  name: "Mon Thème",
+  variables: {
     "--bg-primary": "#0a0a0a",
     "--accent": "#00ff88",
-    ...
+    // ...voir ThemeVariables dans src/types/index.ts
   }
 }
 ```
+
+Les fichiers du dossier `themes/` ne sont pas chargés par l'appli.
 
 ## Feuille de route
 
