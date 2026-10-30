@@ -1,5 +1,7 @@
 #![allow(unused_imports)]
 
+#[cfg(target_os = "linux")]
+mod media_server;
 mod osu_parse;
 
 use id3::TagLike;
@@ -160,7 +162,10 @@ fn wsl_mounts() -> Vec<PathBuf> {
 
 /// Premier emplacement osu! existant, ou une chaîne vide si aucun n'est trouvé —
 /// le front ouvre alors le sélecteur de dossier.
-#[tauri::command]
+// `async` partout où le disque est touché : une commande Tauri synchrone tourne
+// sur le fil principal, qui gère aussi la fenêtre. Pendant un scan, celle-ci
+// ne recevait plus ni clics ni curseur.
+#[tauri::command(async)]
 fn default_songs_folder() -> String {
     let local_app_data = std::env::var("LOCALAPPDATA").ok();
     let home = std::env::var("HOME").unwrap_or_default();
@@ -249,8 +254,27 @@ fn read_osu_metadata(folder: &Path, duration_secs: Option<u64>) -> OsuMetadata {
     }
 }
 
-#[tauri::command]
-fn scan_osu_songs(folder_path: String) -> Result<Vec<Track>, String> {
+/// Ouvre la portée du protocole asset au dossier Songs choisi.
+///
+/// La portée statique de la config ne peut pas deviner où sont les beatmaps :
+/// un autre disque (S:\ sous Windows), un point de montage arbitraire, ou un
+/// préfixe Wine caché (`~/.wine`), que les motifs glob excluent par défaut
+/// sous Unix. Les pistes s'affichaient, lues par le scan Rust, mais la webview
+/// se voyait refuser les fichiers : ni son, ni fond, ni vidéo.
+fn allow_songs_folder(app: &tauri::AppHandle, folder_path: &str) {
+    use tauri::Manager;
+    if let Err(e) = app.asset_protocol_scope().allow_directory(folder_path, true) {
+        eprintln!("asset scope: {folder_path}: {e}");
+    }
+}
+
+#[tauri::command(async)]
+fn scan_osu_songs(app: tauri::AppHandle, folder_path: String) -> Result<Vec<Track>, String> {
+    allow_songs_folder(&app, &folder_path);
+    scan_songs_folder(&folder_path)
+}
+
+fn scan_songs_folder(folder_path: &str) -> Result<Vec<Track>, String> {
     let mut tracks: Vec<Track> = Vec::new();
 
     if !Path::new(&folder_path).exists() {
@@ -378,8 +402,10 @@ fn folder_mtime(folder_path: &str) -> u64 {
         .unwrap_or(0)
 }
 
-#[tauri::command]
-fn load_tracks_cache(cache_path: String, folder_path: String) -> Option<Vec<Track>> {
+#[tauri::command(async)]
+fn load_tracks_cache(app: tauri::AppHandle, cache_path: String, folder_path: String) -> Option<Vec<Track>> {
+    // Même avec un cache valide, sans scan : la portée doit couvrir le dossier.
+    allow_songs_folder(&app, &folder_path);
     let content = std::fs::read_to_string(&cache_path).ok()?;
     let cache: TracksCache = serde_json::from_str(&content).ok()?;
     let current_mtime = folder_mtime(&folder_path);
@@ -390,7 +416,7 @@ fn load_tracks_cache(cache_path: String, folder_path: String) -> Option<Vec<Trac
     }
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 fn save_tracks_cache(cache_path: String, folder_path: String, tracks: Vec<Track>) -> Result<(), String> {
     let cache = TracksCache {
         version: CACHE_VERSION,
@@ -419,14 +445,34 @@ fn window_size(sphere_mode: bool) -> tauri::LogicalSize<f64> {
     }
 }
 
+/// Taille minimale du mode normal, celle de `tauri.conf.json`.
+fn normal_min_size() -> tauri::LogicalSize<f64> {
+    tauri::LogicalSize { width: 320.0, height: 480.0 }
+}
+
 #[tauri::command]
 async fn set_sphere_mode(app: tauri::AppHandle, enabled: bool) -> Result<(), String> {
     use tauri::Manager;
     let win = app.get_webview_window("main").ok_or("window not found")?;
+    // Le minimum de la config (480 px de haut) s'imposait aussi à la sphère :
+    // la fenêtre restait haute de 480 px, et la bande vide sous le cercle
+    // captait les clics destinés aux fenêtres derrière. Une sphère ne se
+    // redimensionne pas non plus : l'attraper près du bord l'étirait.
+    let min_size = (!enabled).then(|| tauri::Size::Logical(normal_min_size()));
+    win.set_min_size(min_size).map_err(|e| e.to_string())?;
+    win.set_resizable(!enabled).map_err(|e| e.to_string())?;
     win.set_size(tauri::Size::Logical(window_size(enabled)))
         .map_err(|e| e.to_string())?;
     win.set_always_on_top(enabled).map_err(|e| e.to_string())?;
     Ok(())
+}
+
+/// Adresse du serveur média local, ou rien hors Linux, où asset:// suffit.
+struct MediaBaseUrl(Option<String>);
+
+#[tauri::command]
+fn media_base_url(state: tauri::State<'_, MediaBaseUrl>) -> Option<String> {
+    state.0.clone()
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -435,12 +481,35 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
+        .setup(|app| {
+            use tauri::Manager;
+            #[cfg(target_os = "linux")]
+            let base_url = {
+                let handle = app.handle().clone();
+                // Même liste d'autorisation que le protocole asset : le dossier
+                // Songs y est ajouté au chargement du cache ou au scan.
+                match media_server::MediaServer::start(move |path| {
+                    handle.asset_protocol_scope().is_allowed(path)
+                }) {
+                    Ok(server) => Some(server.base_url),
+                    Err(e) => {
+                        eprintln!("serveur média : {e}");
+                        None
+                    }
+                }
+            };
+            #[cfg(not(target_os = "linux"))]
+            let base_url = None;
+            app.manage(MediaBaseUrl(base_url));
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             scan_osu_songs,
             default_songs_folder,
             load_tracks_cache,
             save_tracks_cache,
             set_sphere_mode,
+            media_base_url,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -579,6 +648,16 @@ mod tests {
         let size = window_size(false);
         assert_eq!(Some(size.width), window["width"].as_f64());
         assert_eq!(Some(size.height), window["height"].as_f64());
+    }
+
+    #[test]
+    fn taille_minimale_retablie_identique_a_la_config() {
+        let conf: serde_json::Value =
+            serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
+        let window = &conf["app"]["windows"][0];
+        let size = normal_min_size();
+        assert_eq!(Some(size.width), window["minWidth"].as_f64());
+        assert_eq!(Some(size.height), window["minHeight"].as_f64());
     }
 
     #[test]

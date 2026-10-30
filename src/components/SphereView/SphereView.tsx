@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type MouseEvent } from 'react';
 import { usePlayerStore } from '@/stores/playerStore';
 import { convertFileSrc } from '@tauri-apps/api/core';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
 import { BeatmapVideo, hasVideo } from '@/components/BeatmapVideo/BeatmapVideo';
 import type { Track } from '@/types';
@@ -10,6 +11,21 @@ import './SphereView.css';
 // les positions sans mesurer le DOM.
 const SPHERE_TRACK_HEIGHT = 36;
 
+// Ce qui garde son clic ; tout le reste de la sphère sert de poignée.
+const INTERACTIVE = 'button, input, .sphere-track';
+
+/**
+ * Déplace la fenêtre depuis n'importe quel point libre de la sphère.
+ * L'attribut data-tauri-drag-region ne réagit qu'à l'élément cliqué
+ * lui-même : posé sur la sphère, toujours recouverte par le fond et le voile,
+ * il ne servait jamais — et un double-clic y aurait agrandi la fenêtre.
+ */
+function startWindowDrag(e: MouseEvent) {
+  if (e.button !== 0 || (e.target as Element).closest(INTERACTIVE)) return;
+  e.preventDefault();
+  getCurrentWindow().startDragging().catch(() => {});
+}
+
 interface Props {
   onToggle: () => void;
   onSeek: (ratio: number) => void;
@@ -17,17 +33,20 @@ interface Props {
 
 export function SphereView({ onToggle, onSeek }: Props) {
   const {
-    tracks, searchQuery, currentTrack, status, progress,
+    tracks, searchQuery, videoOnly, currentTrack, status, progress,
     isShuffled, repeatMode, setCurrentTrack, nextTrack, prevTrack,
     cycleRepeat, toggleShuffle,
   } = usePlayerStore();
 
   const filtered = useMemo(() => {
     const q = searchQuery.toLowerCase();
-    return q ? tracks.filter(t =>
+    // Le filtre vidéo de la bibliothèque vaut aussi ici : « suivant » ne
+    // parcourt que ces pistes, la liste doit montrer les mêmes.
+    const base = videoOnly ? tracks.filter(t => t.videoPath) : tracks;
+    return q ? base.filter(t =>
       t.title.toLowerCase().includes(q) || t.artist.toLowerCase().includes(q)
-    ) : tracks;
-  }, [tracks, searchQuery]);
+    ) : base;
+  }, [tracks, searchQuery, videoOnly]);
 
   const { containerRef, start, end, totalHeight, offsetTop } =
     useVirtualRows<HTMLDivElement>(filtered.length, SPHERE_TRACK_HEIGHT);
@@ -50,7 +69,7 @@ export function SphereView({ onToggle, onSeek }: Props) {
   const elapsed = currentTrack?.duration ? progress * currentTrack.duration : 0;
 
   return (
-    <div className={`sphere-view ${videoTrack ? 'has-video' : ''}`} data-tauri-drag-region>
+    <div className={`sphere-view ${videoTrack ? 'has-video' : ''}`} onMouseDown={startWindowDrag}>
       {videoTrack ? (
         <BeatmapVideo
           key={videoTrack.id}
@@ -64,7 +83,7 @@ export function SphereView({ onToggle, onSeek }: Props) {
       <div className="sphere-bg-overlay" />
 
       {/* Track list */}
-      <div className="sphere-list" data-tauri-drag-region="false" ref={containerRef}>
+      <div className="sphere-list" ref={containerRef}>
         <div style={{ height: totalHeight, position: 'relative' }}>
           <div style={{ transform: `translateY(${offsetTop}px)` }}>
             {filtered.slice(start, end).map((track: Track) => (
@@ -100,7 +119,6 @@ export function SphereView({ onToggle, onSeek }: Props) {
           type="range" min={0} max={1} step={0.001} value={progress}
           onChange={(e) => onSeek(+e.target.value)}
           className="sphere-seek"
-          data-tauri-drag-region="false"
         />
         <span className="sphere-time">{formatTime(currentTrack?.duration)}</span>
       </div>

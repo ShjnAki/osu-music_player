@@ -10,13 +10,26 @@ const TRACK_ROW_HEIGHT = 47;
 
 type Tab = 'all' | 'favorites' | 'playlists';
 
+// Dessinée plutôt qu'un emoji 🎬 : sans police d'emoji (courant sous Linux),
+// celui-ci s'affiche en carré vide.
+function VideoIcon() {
+  return (
+    <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M1.5 4.75C1.5 3.78 2.28 3 3.25 3h6.5c.97 0 1.75.78 1.75 1.75v.9l2.4-1.5a.6.6 0 0 1 .9.51v6.68a.6.6 0 0 1-.9.51l-2.4-1.5v.9c0 .97-.78 1.75-1.75 1.75h-6.5c-.97 0-1.75-.78-1.75-1.75z"
+      />
+    </svg>
+  );
+}
+
 export function Library() {
   const {
-    tracks, searchQuery, bpmFilter, favoriteIds,
+    tracks, searchQuery, bpmFilter, videoOnly, favoriteIds, isScanning,
     playlists, activePlaylistId,
     currentTrack, setSearchQuery, setCurrentTrack,
-    setBpmFilter, toggleFavorite,
-    createPlaylist, deletePlaylist, addToPlaylist, setActivePlaylist,
+    setBpmFilter, setVideoOnly, toggleFavorite,
+    createPlaylist, deletePlaylist, addToPlaylist, removeFromPlaylist, setActivePlaylist,
   } = usePlayerStore();
 
   const [tab, setTab] = useState<Tab>('all');
@@ -35,8 +48,11 @@ export function Library() {
       activeFavOnly,
       favoriteIds,
       activePlaylist?.trackIds ?? null,
+      videoOnly,
     );
-  }, [tracks, searchQuery, bpmFilter, activeFavOnly, favoriteIds, activePlaylist]);
+  }, [tracks, searchQuery, bpmFilter, activeFavOnly, favoriteIds, activePlaylist, videoOnly]);
+
+  const hasVideos = useMemo(() => tracks.some(t => t.videoPath), [tracks]);
 
   const { containerRef, start, end, totalHeight, offsetTop } =
     useVirtualRows<HTMLDivElement>(filtered.length, TRACK_ROW_HEIGHT);
@@ -114,6 +130,13 @@ export function Library() {
             title="BPM filter"
           >BPM</button>
         )}
+        {hasVideos && (
+          <button
+            className={`video-toggle ${videoOnly ? 'active' : ''}`}
+            onClick={() => setVideoOnly(!videoOnly)}
+            title="Only tracks with a video"
+          >Video</button>
+        )}
         <span className="library-count">{filtered.length} tracks</span>
       </div>
 
@@ -157,7 +180,14 @@ export function Library() {
       <div className="library-list" ref={containerRef}>
         {filtered.length === 0 ? (
           <div className="library-empty">
-            {tracks.length === 0 ? (
+            {tracks.length === 0 && isScanning ? (
+              // Un premier scan peut durer : sans ce message, la liste vide
+              // invitait à relancer un scan déjà en cours.
+              <>
+                <p>Scanning your osu! folder…</p>
+                <small>This can take a while the first time</small>
+              </>
+            ) : tracks.length === 0 ? (
               <>
                 <p>No tracks found</p>
                 <small>Go to ⚙ Settings to scan your osu! folder</small>
@@ -179,6 +209,8 @@ export function Library() {
                   <div className="track-thumb">
                     {currentTrack?.id === track.id ? (
                       <span className="track-playing">▶</span>
+                    ) : track.videoPath ? (
+                      <span className="track-video" title="Has a video"><VideoIcon /></span>
                     ) : (
                       <span className="track-num">♪</span>
                     )}
@@ -203,6 +235,13 @@ export function Library() {
                         onClick={() => setAddingToPlaylist(track.id)}
                         title="Add to playlist"
                       >+</button>
+                    )}
+                    {activePlaylist && (
+                      <button
+                        className="track-remove-btn"
+                        onClick={() => removeFromPlaylist(activePlaylist.id, track.id)}
+                        title={`Remove from ${activePlaylist.name}`}
+                      >×</button>
                     )}
                   </div>
                 </div>

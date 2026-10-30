@@ -47,17 +47,20 @@ export default function App() {
   const getCachePath = async () => join(await appLocalDataDir(), 'tracks-cache.json');
 
   const loadOrScan = async () => {
+    // Dès le départ et sans interruption jusqu'au scan : sinon la liste vide
+    // affichait « No tracks found » le temps de chercher le dossier et le cache.
+    setIsScanning(true);
     let folder = songsFolder;
     if (!folder) {
       folder = await invoke<string>('default_songs_folder').catch(() => '');
       if (!folder) {
+        setIsScanning(false);
         setShowSettings(true);
         return;
       }
       setSongsFolder(folder);
     }
 
-    setIsScanning(true);
     setScanError(null);
     try {
       const cachePath = await getCachePath();
@@ -67,12 +70,11 @@ export default function App() {
       });
       if (cached) {
         setTracks(cached.map(mapRaw));
+        setIsScanning(false);
         return;
       }
     } catch {
       // cache miss or read error — fall through to full scan
-    } finally {
-      setIsScanning(false);
     }
     await handleScan(folder);
   };

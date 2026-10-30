@@ -1,50 +1,79 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { Howl } from 'howler';
-import { convertFileSrc } from '@tauri-apps/api/core';
 import { usePlayerStore, predictNextTrack } from '@/stores/playerStore';
+import { localMediaUrl } from '@/lib/localMedia';
 
 // Laisse la piste courante finir de démarrer avant d'ouvrir la suivante, pour
 // que les deux lectures disque ne se concurrencent pas.
 const PRELOAD_DELAY_MS = 1000;
+
+// Un <audio> natif plutôt que Howler : en mode html5, Howler fige la durée au
+// premier « prêt » et programme la fin de piste par minuterie. Si la webview
+// annonce d'abord une durée nulle, comme WebKitGTK pour un blob, Howler
+// conclut la piste finie dès le départ et passe à la suivante. L'évènement
+// `ended` du navigateur ne dépend pas de cette estimation.
+interface OpenTrack {
+  audio: HTMLAudioElement;
+  release: () => void;
+}
+
+async function openTrack(path: string): Promise<OpenTrack> {
+  const audio = new Audio();
+  audio.preload = 'auto';
+  audio.src = await localMediaUrl(path);
+  return {
+    audio,
+    release: () => {
+      audio.pause();
+      // Sans ça, l'élément garde le fichier ouvert jusqu'au ramasse-miettes.
+      audio.removeAttribute('src');
+      audio.load();
+    },
+  };
+}
+
+/** Assez de données pour démarrer sans coupure (HAVE_FUTURE_DATA). */
+const isPlayable = (audio: HTMLAudioElement) => audio.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA;
 
 /**
  * Piste suivante déjà ouverte et décodée : « suivant » et l'enchaînement en
  * fin de morceau démarrent sans attendre le disque — et, sous Windows,
  * l'analyse antivirus à l'ouverture du fichier.
  */
-let preloaded: { trackId: string; howl: Howl } | null = null;
+let preloaded: { trackId: string; track: Promise<OpenTrack> } | null = null;
 
 function preloadNextTrack() {
   const next = predictNextTrack(usePlayerStore.getState());
   if (!next || preloaded?.trackId === next.id) return;
-  preloaded?.howl.unload();
-  const howl = new Howl({
-    src: [convertFileSrc(next.path)],
-    html5: true,
-    preload: true,
-    // Une piste illisible ne doit pas être adoptée : elle resterait muette.
-    onloaderror: () => { if (preloaded?.howl === howl) preloaded = null; howl.unload(); },
-  });
-  preloaded = { trackId: next.id, howl };
+  preloaded?.track.then((t) => t.release(), () => {});
+  const entry = { trackId: next.id, track: openTrack(next.path) };
+  preloaded = entry;
+  // Une piste illisible ne doit pas être adoptée : elle resterait muette. Si
+  // elle l'est déjà, c'est l'effet de lecture qui gère l'erreur.
+  const discard = () => { if (preloaded === entry) preloaded = null; };
+  entry.track.then((t) => t.audio.addEventListener('error', () => {
+    if (preloaded !== entry) return;
+    discard();
+    t.release();
+  }, { once: true }), discard);
 }
 
-function takePreloaded(trackId: string): Howl | null {
+function takePreloaded(trackId: string): Promise<OpenTrack> | null {
   if (preloaded?.trackId !== trackId) return null;
-  const { howl } = preloaded;
+  const { track } = preloaded;
   preloaded = null;
-  return howl;
+  return track;
 }
 
 export function useAudio() {
-  const howlRef = useRef<Howl | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const releaseRef = useRef<(() => void) | null>(null);
   const progressRef = useRef<number>(0);
   const { currentTrack, volume, isMuted, setStatus, setPlayback, nextTrack } = usePlayerStore();
 
   const cleanup = useCallback(() => {
-    if (howlRef.current) {
-      howlRef.current.unload();
-      howlRef.current = null;
-    }
+    releaseRef.current?.();
+    releaseRef.current = null;
+    audioRef.current = null;
   }, []);
 
   useEffect(() => {
@@ -52,68 +81,77 @@ export function useAudio() {
     cleanup();
     setStatus('loading');
 
-    const src = convertFileSrc(currentTrack.path);
-
-    const adopted = takePreloaded(currentTrack.id);
-    const howl = adopted ?? new Howl({
-      src: [src],
-      html5: true,
-      volume: isMuted ? 0 : volume,
-      onend: () => nextTrack(),
-      onloaderror: (_id: number, _err: unknown) => setStatus('error'),
-      onplay: () => setStatus('playing'),
-      onpause: () => setStatus('paused'),
-    });
-    if (adopted) {
-      adopted.volume(isMuted ? 0 : volume);
-      adopted.on('end', () => nextTrack());
-      adopted.on('loaderror', () => setStatus('error'));
-      adopted.on('play', () => setStatus('playing'));
-      adopted.on('pause', () => setStatus('paused'));
-    }
-
+    // L'ouverture est asynchrone (adresse du serveur média sous Linux) : une
+    // piste changée entre-temps ne doit ni jouer ni rester ouverte.
+    let cancelled = false;
+    // Détachés avant la libération : la pause qu'elle provoque ne doit pas
+    // repasser la nouvelle piste, en chargement, à l'état « en pause ».
+    const listeners = new AbortController();
+    const { signal } = listeners;
+    let tick: ReturnType<typeof setInterval> | undefined;
     let preloadTimer: ReturnType<typeof setTimeout> | undefined;
-    const start = () => {
-      setStatus('playing');
-      howl.play();
-      preloadTimer = setTimeout(preloadNextTrack, PRELOAD_DELAY_MS);
-    };
-    // Une piste préchargée peut être prête avant même d'être adoptée.
-    if (howl.state() === 'loaded') start(); else howl.once('load', start);
 
-    howlRef.current = howl;
+    const adopt = (track: OpenTrack) => {
+      if (cancelled) { track.release(); return; }
+      const { audio } = track;
+      audioRef.current = audio;
+      releaseRef.current = track.release;
 
-    const tick = setInterval(() => {
-      if (howl.playing()) {
-        const seek = howl.seek() as number;
-        const dur = howl.duration() || 1;
-        const p = seek / dur;
-        if (Math.abs(p - progressRef.current) > 0.001) {
-          progressRef.current = p;
-          setPlayback(p, seek);
+      const { isMuted: muted, volume: vol } = usePlayerStore.getState();
+      audio.volume = muted ? 0 : vol;
+      audio.addEventListener('ended', () => nextTrack(), { signal });
+      audio.addEventListener('error', () => setStatus('error'), { signal });
+      audio.addEventListener('play', () => setStatus('playing'), { signal });
+      audio.addEventListener('pause', () => { if (!audio.ended) setStatus('paused'); }, { signal });
+      // Une piste préchargée en erreur avant d'être adoptée.
+      if (audio.error) { setStatus('error'); return; }
+
+      const start = () => {
+        // Rejet attendu si la piste est quittée avant de démarrer (AbortError) ;
+        // les vraies erreurs de lecture arrivent par l'évènement `error`.
+        audio.play().catch(() => {});
+        preloadTimer = setTimeout(preloadNextTrack, PRELOAD_DELAY_MS);
+      };
+      // Une piste préchargée peut être prête avant même d'être adoptée.
+      if (isPlayable(audio)) start(); else audio.addEventListener('canplay', start, { once: true, signal });
+
+      tick = setInterval(() => {
+        if (!audio.paused && audio.duration > 0) {
+          const seek = audio.currentTime;
+          const p = seek / audio.duration;
+          if (Math.abs(p - progressRef.current) > 0.001) {
+            progressRef.current = p;
+            setPlayback(p, seek);
+          }
         }
-      }
-    }, 500);
+      }, 500);
+    };
 
-    return () => { clearInterval(tick); clearTimeout(preloadTimer); cleanup(); };
+    (takePreloaded(currentTrack.id) ?? openTrack(currentTrack.path)).then(
+      adopt,
+      () => { if (!cancelled) setStatus('error'); },
+    );
+
+    return () => { cancelled = true; listeners.abort(); clearInterval(tick); clearTimeout(preloadTimer); cleanup(); };
   }, [currentTrack]);
 
   useEffect(() => {
-    if (!howlRef.current) return;
-    howlRef.current.volume(isMuted ? 0 : volume);
+    if (!audioRef.current) return;
+    audioRef.current.volume = isMuted ? 0 : volume;
   }, [volume, isMuted]);
 
-  const play = useCallback(() => howlRef.current?.play(), []);
-  const pause = useCallback(() => howlRef.current?.pause(), []);
+  const play = useCallback(() => { audioRef.current?.play().catch(() => {}); }, []);
+  const pause = useCallback(() => audioRef.current?.pause(), []);
   const seek = useCallback((ratio: number) => {
-    if (!howlRef.current) return;
-    const dur = howlRef.current.duration() || 0;
-    howlRef.current.seek(ratio * dur);
-    setPlayback(ratio, ratio * dur);
+    const audio = audioRef.current;
+    if (!audio || !(audio.duration > 0)) return;
+    audio.currentTime = ratio * audio.duration;
+    setPlayback(ratio, ratio * audio.duration);
   }, []);
   const toggle = useCallback(() => {
-    if (!howlRef.current) return;
-    if (howlRef.current.playing()) pause(); else play();
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (audio.paused) play(); else pause();
   }, [play, pause]);
 
   return { play, pause, toggle, seek };
