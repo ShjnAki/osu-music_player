@@ -41,7 +41,7 @@ export function Library() {
   // et l'ordre de lecture ne peuvent plus diverger.
   const filtered = useMemo(
     () => visibleTracks(store),
-    [tracks, searchQuery, bpmFilter, videoOnly, favoriteIds, tab, activePlaylistId, playlists],
+    [tracks, searchQuery, bpmFilter, videoOnly, favoriteIds, tab, activePlaylistId, playlists, store.hideDuplicates, currentTrack],
   );
 
   const hasVideos = useMemo(() => tracks.some(t => t.videoPath), [tracks]);

@@ -47,7 +47,7 @@ export function SphereView({ onToggle, onSeek, onPrevious }: Props) {
   // parcourt qu'elle, la sphère doit montrer les mêmes pistes.
   const filtered = useMemo(
     () => visibleTracks(store),
-    [tracks, searchQuery, videoOnly, store.bpmFilter, store.favoriteIds, store.libraryTab, store.activePlaylistId, store.playlists],
+    [tracks, searchQuery, videoOnly, store.bpmFilter, store.favoriteIds, store.libraryTab, store.activePlaylistId, store.playlists, store.hideDuplicates, currentTrack],
   );
 
   const { containerRef, start, end, totalHeight, offsetTop } =

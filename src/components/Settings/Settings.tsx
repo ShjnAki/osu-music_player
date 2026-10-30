@@ -9,6 +9,7 @@ export function Settings({ onScan, isScanning }: Props) {
   const {
     songsFolder, setSongsFolder, setShowSettings,
     hideControlsOverVideo, setHideControlsOverVideo,
+    hideDuplicates, setHideDuplicates,
     showVisualizer, setShowVisualizer,
   } = usePlayerStore();
   const { themes, currentTheme, setTheme } = useTheme();
@@ -40,6 +41,17 @@ export function Settings({ onScan, isScanning }: Props) {
           <button className={`btn-primary ${isScanning ? 'loading' : ''}`} onClick={onScan} disabled={isScanning}>
             {isScanning ? 'Scanning...' : 'Scan folder'}
           </button>
+          <label className="settings-toggle">
+            <input
+              type="checkbox"
+              checked={hideDuplicates}
+              onChange={(e) => setHideDuplicates(e.target.checked)}
+            />
+            <span>
+              Hide duplicates
+              <small>Shows one copy of a song found in several beatmap sets: same title, artist and length.</small>
+            </span>
+          </label>
         </section>
 
         <section className="settings-section">
