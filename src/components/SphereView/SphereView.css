@@ -278,9 +278,9 @@
   text-shadow: 0 1px 3px color-mix(in srgb, var(--bg-primary) 90%, transparent);
 }
 
-/* Option « masquer les contrôles sur la vidéo » : pointeur hors de la sphère,
-   liste, titre et contrôles s'effacent et le voile s'allège pour laisser voir
-   la vidéo ; ils reviennent dès que le pointeur la survole. */
+/* Option « masquer les contrôles sur la vidéo » : sans activité (voir
+   useAutoHide), liste, titre et contrôles s'effacent et le voile s'allège pour
+   laisser voir la vidéo ; ils reviennent au moindre mouvement. */
 .sphere-view.video-focus > .sphere-list,
 .sphere-view.video-focus > .sphere-now-playing,
 .sphere-view.video-focus > .sphere-progress,
@@ -288,12 +288,15 @@
 .sphere-view.video-focus > .sphere-bg-overlay {
   transition: opacity 0.4s ease;
 }
-.sphere-view.video-focus:not(:hover) > .sphere-list,
-.sphere-view.video-focus:not(:hover) > .sphere-now-playing,
-.sphere-view.video-focus:not(:hover) > .sphere-progress,
-.sphere-view.video-focus:not(:hover) > .sphere-controls {
+.sphere-view.controls-hidden > .sphere-list,
+.sphere-view.controls-hidden > .sphere-now-playing,
+.sphere-view.controls-hidden > .sphere-progress,
+.sphere-view.controls-hidden > .sphere-controls {
   opacity: 0;
+  /* Invisibles, ils ne doivent pas capter le clic qui réveille l'affichage :
+     il lancerait une piste ou un bouton qu'on ne voit pas. */
+  pointer-events: none;
 }
-.sphere-view.video-focus:not(:hover) > .sphere-bg-overlay {
+.sphere-view.controls-hidden > .sphere-bg-overlay {
   opacity: 0.15;
 }

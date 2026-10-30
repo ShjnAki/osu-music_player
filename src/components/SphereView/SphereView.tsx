@@ -3,6 +3,7 @@ import { usePlayerStore } from '@/stores/playerStore';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
+import { useAutoHide } from '@/hooks/useAutoHide';
 import { BeatmapVideo, useVideoTrack } from '@/components/BeatmapVideo/BeatmapVideo';
 import type { Track } from '@/types';
 import './SphereView.css';
@@ -56,7 +57,9 @@ export function SphereView({ onToggle, onSeek }: Props) {
   const bgUrl = bgRaw ? convertFileSrc(bgRaw) : null;
 
   const { videoTrack, markUnavailable } = useVideoTrack(currentTrack);
-  const videoFocus = videoTrack && hideSphereControlsOverVideo;
+  const videoFocus = !!videoTrack && hideSphereControlsOverVideo;
+  // En pause, les contrôles restent : c'est pour s'en servir qu'on s'arrête.
+  const { hidden: controlsHidden, handlers: autoHide } = useAutoHide(videoFocus && status === 'playing');
 
   const formatTime = (secs?: number) => {
     if (!secs) return '0:00';
@@ -67,8 +70,9 @@ export function SphereView({ onToggle, onSeek }: Props) {
 
   return (
     <div
-      className={`sphere-view ${videoTrack ? 'has-video' : ''} ${videoFocus ? 'video-focus' : ''}`}
-      onMouseDown={startWindowDrag}
+      className={`sphere-view ${videoTrack ? 'has-video' : ''} ${videoFocus ? 'video-focus' : ''} ${controlsHidden ? 'controls-hidden' : ''}`}
+      {...autoHide}
+      onMouseDown={(e) => { autoHide.onMouseDown?.(); startWindowDrag(e); }}
     >
       {videoTrack ? (
         <BeatmapVideo

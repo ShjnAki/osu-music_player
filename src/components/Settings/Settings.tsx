@@ -51,7 +51,7 @@ export function Settings({ onScan, isScanning }: Props) {
             />
             <span>
               Hide sphere controls over videos
-              <small>They come back when the pointer is over the sphere.</small>
+              <small>They fade out after a moment without moving the pointer, and come back as soon as it moves.</small>
             </span>
           </label>
         </section>
