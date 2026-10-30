@@ -113,6 +113,12 @@ Copie n'importe quel fichier `themes/*.json` et modifie les variables CSS :
 - [ ] Android / iOS (Tauri 2.0 mobile)
 - [ ] Visualiseur de forme d'onde
 
+## Crédits
+
+Créé et maintenu par **Shin Aki** — projet d'origine : [github.com/ShjnAki/osu-music_player](https://github.com/ShjnAki/osu-music_player).
+
+Si tu utilises, forkes ou partages l'appli, merci de créditer le projet d'origine avec un lien vers ce dépôt. Et si elle te plaît, une ⭐ sur le dépôt est la meilleure façon de dire merci !
+
 ## Licence
 
-MIT — Fork-le, modifie-le, partage-le ! 🎮
+MIT — Fork-le, modifie-le, partage-le ! 🎮 Voir [LICENSE](LICENSE) : garde sa mention de copyright dans tes copies et tes forks.

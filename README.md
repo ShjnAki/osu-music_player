@@ -107,6 +107,12 @@ Themes are defined in `src/hooks/useTheme.ts` as objects with CSS custom propert
 }
 ```
 
+## Credits
+
+Created and maintained by **Shin Aki** — original project: [github.com/ShjnAki/osu-music_player](https://github.com/ShjnAki/osu-music_player).
+
+If you use, fork or share this app, please credit the original project with a link back to this repository. And if you like it, a ⭐ on the repo is the best way to say thanks!
+
 ## License
 
-MIT — Fork it, mod it, share it! 🎮
+MIT — Fork it, mod it, share it! 🎮 See [LICENSE](LICENSE): keep its copyright notice in your copies and forks.
