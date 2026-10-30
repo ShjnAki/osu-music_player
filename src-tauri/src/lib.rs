@@ -15,7 +15,7 @@ const MAX_DURATION_SECS: u64 = 600;
 /// Incrémenter invalide les caches existants. Nécessaire quand le scan produit
 /// des champs que les anciens caches n'ont pas : sans ça, un cache dont la
 /// mtime n'a pas bougé est resservi indéfiniment, sans les nouvelles données.
-const CACHE_VERSION: u32 = 3;
+const CACHE_VERSION: u32 = 4;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Track {
@@ -42,6 +42,20 @@ fn md5_simple(input: &str) -> u64 {
     let mut hasher = DefaultHasher::new();
     input.hash(&mut hasher);
     hasher.finish()
+}
+
+/// Texte d'un tag ID3 débarrassé de ce qui ne s'affiche pas.
+///
+/// Certains tags ne contiennent que des caractères de contrôle (octets nuls de
+/// remplissage, par exemple), des espaces ou des caractères sans largeur : non
+/// vides, ils passaient pour un vrai titre, et la piste s'affichait sans nom au
+/// lieu de se rabattre sur le nom du dossier.
+fn clean_tag_text(text: &str) -> String {
+    text.chars()
+        .filter(|c| !c.is_control() && !matches!(c, '\u{200B}'..='\u{200D}' | '\u{2060}' | '\u{FEFF}'))
+        .collect::<String>()
+        .trim()
+        .to_string()
 }
 
 fn fix_encoding(s: &str) -> String {
@@ -304,9 +318,9 @@ fn scan_songs_folder(folder_path: &str) -> Result<Vec<Track>, String> {
             let (title, artist, album, duration) = if ext == "mp3" {
                 match id3::Tag::read_from_path(path) {
                     Ok(tag) => {
-                        let raw_title = tag.title().unwrap_or("").to_string();
-                        let raw_artist = tag.artist().unwrap_or("").to_string();
-                        let raw_album = tag.album().unwrap_or("").to_string();
+                        let raw_title = clean_tag_text(tag.title().unwrap_or(""));
+                        let raw_artist = clean_tag_text(tag.artist().unwrap_or(""));
+                        let raw_album = clean_tag_text(tag.album().unwrap_or(""));
                         let duration = tag
                             .duration()
                             .map(|d| d as u64 / 1000) // TLEN frame stores milliseconds
@@ -581,6 +595,38 @@ mod tests {
             candidates.contains(&"/mnt/s/osu!/Songs".to_string()),
             "candidats obtenus : {candidates:?}"
         );
+    }
+
+    #[test]
+    fn tag_fait_de_caracteres_invisibles_devient_vide() {
+        assert_eq!(clean_tag_text("\0\0\0"), "");
+        assert_eq!(clean_tag_text("   "), "");
+        assert_eq!(clean_tag_text("\u{FEFF}\u{200B}"), "");
+    }
+
+    #[test]
+    fn tag_lisible_garde_son_texte_sans_le_remplissage() {
+        assert_eq!(clean_tag_text("コネクト\0\0"), "コネクト");
+        assert_eq!(clean_tag_text(" Magia (TV Size) "), "Magia (TV Size)");
+    }
+
+    #[test]
+    fn titre_et_artiste_invisibles_remplaces_par_le_nom_du_dossier() {
+        let songs = std::env::temp_dir().join(format!("osu-player-test-tags-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&songs);
+        let folder = songs.join("123 ClariS - Connect");
+        std::fs::create_dir_all(&folder).unwrap();
+        let audio = folder.join("audio.mp3");
+        std::fs::write(&audio, vec![0u8; 4096]).unwrap();
+        let mut tag = id3::Tag::new();
+        tag.set_title("\u{200B}  ");
+        tag.set_artist("\u{FEFF}");
+        tag.set_duration(120_000);
+        tag.write_to_path(&audio, id3::Version::Id3v24).unwrap();
+
+        let tracks = scan_songs_folder(songs.to_str().unwrap()).unwrap();
+        assert_eq!(tracks.len(), 1);
+        assert_eq!((tracks[0].title.as_str(), tracks[0].artist.as_str()), ("Connect", "ClariS"));
     }
 
     /// Dossier de beatmap jetable : chaque test a le sien, les tests tournant
