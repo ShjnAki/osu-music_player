@@ -35,7 +35,7 @@ export function SphereView({ onToggle, onSeek }: Props) {
   const {
     tracks, searchQuery, videoOnly, currentTrack, status, progress,
     isShuffled, repeatMode, setCurrentTrack, nextTrack, prevTrack,
-    cycleRepeat, toggleShuffle,
+    cycleRepeat, toggleShuffle, hideSphereControlsOverVideo,
   } = usePlayerStore();
 
   const filtered = useMemo(() => {
@@ -56,6 +56,7 @@ export function SphereView({ onToggle, onSeek }: Props) {
   const bgUrl = bgRaw ? convertFileSrc(bgRaw) : null;
 
   const { videoTrack, markUnavailable } = useVideoTrack(currentTrack);
+  const videoFocus = videoTrack && hideSphereControlsOverVideo;
 
   const formatTime = (secs?: number) => {
     if (!secs) return '0:00';
@@ -65,7 +66,10 @@ export function SphereView({ onToggle, onSeek }: Props) {
   const elapsed = currentTrack?.duration ? progress * currentTrack.duration : 0;
 
   return (
-    <div className={`sphere-view ${videoTrack ? 'has-video' : ''}`} onMouseDown={startWindowDrag}>
+    <div
+      className={`sphere-view ${videoTrack ? 'has-video' : ''} ${videoFocus ? 'video-focus' : ''}`}
+      onMouseDown={startWindowDrag}
+    >
       {videoTrack ? (
         <BeatmapVideo
           key={videoTrack.id}

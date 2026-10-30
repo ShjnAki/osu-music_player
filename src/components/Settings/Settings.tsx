@@ -6,7 +6,10 @@ import './Settings.css';
 interface Props { onScan: () => void; isScanning: boolean; }
 
 export function Settings({ onScan, isScanning }: Props) {
-  const { songsFolder, setSongsFolder, setShowSettings } = usePlayerStore();
+  const {
+    songsFolder, setSongsFolder, setShowSettings,
+    hideSphereControlsOverVideo, setHideSphereControlsOverVideo,
+  } = usePlayerStore();
   const { themes, currentTheme, setTheme } = useTheme();
 
   const handlePickFolder = async () => {
@@ -36,6 +39,21 @@ export function Settings({ onScan, isScanning }: Props) {
           <button className={`btn-primary ${isScanning ? 'loading' : ''}`} onClick={onScan} disabled={isScanning}>
             {isScanning ? 'Scanning...' : 'Scan folder'}
           </button>
+        </section>
+
+        <section className="settings-section">
+          <h3>Videos</h3>
+          <label className="settings-toggle">
+            <input
+              type="checkbox"
+              checked={hideSphereControlsOverVideo}
+              onChange={(e) => setHideSphereControlsOverVideo(e.target.checked)}
+            />
+            <span>
+              Hide sphere controls over videos
+              <small>They come back when the pointer is over the sphere.</small>
+            </span>
+          </label>
         </section>
 
         <section className="settings-section">

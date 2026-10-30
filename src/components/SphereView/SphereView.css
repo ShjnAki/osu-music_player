@@ -277,3 +277,23 @@
 .sphere-view.has-video .sphere-title {
   text-shadow: 0 1px 3px color-mix(in srgb, var(--bg-primary) 90%, transparent);
 }
+
+/* Option « masquer les contrôles sur la vidéo » : pointeur hors de la sphère,
+   liste, titre et contrôles s'effacent et le voile s'allège pour laisser voir
+   la vidéo ; ils reviennent dès que le pointeur la survole. */
+.sphere-view.video-focus > .sphere-list,
+.sphere-view.video-focus > .sphere-now-playing,
+.sphere-view.video-focus > .sphere-progress,
+.sphere-view.video-focus > .sphere-controls,
+.sphere-view.video-focus > .sphere-bg-overlay {
+  transition: opacity 0.4s ease;
+}
+.sphere-view.video-focus:not(:hover) > .sphere-list,
+.sphere-view.video-focus:not(:hover) > .sphere-now-playing,
+.sphere-view.video-focus:not(:hover) > .sphere-progress,
+.sphere-view.video-focus:not(:hover) > .sphere-controls {
+  opacity: 0;
+}
+.sphere-view.video-focus:not(:hover) > .sphere-bg-overlay {
+  opacity: 0.15;
+}
