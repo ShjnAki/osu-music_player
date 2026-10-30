@@ -1,31 +1,38 @@
 # 🎵 osu! Player
 
-Un lecteur de musique bureau léger et personnalisable pour ta collection de beatmaps osu!
+Un lecteur de musique de bureau léger et personnalisable pour ta collection de beatmaps osu!
 
 Développé avec **Tauri 2.0** (Rust) + **React 18** + **TypeScript**.
 
 ## Téléchargement
 
-**[⬇️ Télécharger la dernière version](https://github.com/ShjnAki/osu-music_player/releases/latest)** — installeur Windows, aucune compilation nécessaire.
+**[⬇️ Télécharger la dernière version](https://github.com/ShjnAki/osu-music_player/releases/latest)** — aucune compilation nécessaire.
 
-Récupère le `.msi` (ou l'installeur NSIS `.exe`), lance-le, puis indique ton dossier osu! `Songs` au premier démarrage.
+- **Windows** — le `.msi`, ou l'installeur NSIS `.exe`
+- **Linux** — l'`.AppImage` (portable : `chmod +x`, puis lance-le) ou le `.deb`
+
+Au premier démarrage, l'appli cherche seule ton dossier osu! `Songs`, y compris dans les préfixes Wine et les disques montés par WSL sous Linux, et ouvre le sélecteur de dossier si elle n'en trouve pas.
 
 Tu préfères compiler toi-même ? Voir [Démarrage rapide](#démarrage-rapide).
 
 ## Fonctionnalités
 
-- 🎵 Lecture des fichiers MP3 et OGG depuis ton dossier osu! Songs
-- 📋 Bibliothèque avec recherche (titre / artiste) et filtre des pistes avec vidéo
-- 🎨 4 thèmes intégrés (Dark, Glass, Sakura, Minimal) — d'autres à venir
-- 🔀 Modes aléatoire et répétition
+- 🎵 Lecture des fichiers MP3 et OGG de ton dossier osu! Songs, sur n'importe quel disque (`S:\` compris) et depuis WSL
+- 📋 Bibliothèque avec recherche (titre / artiste), filtre de BPM et filtre des pistes avec vidéo
+- ❤️ Favoris et playlists : ajoute des pistes, retire-les avec **×**
+- 🎨 4 thèmes intégrés (Dark, Glass, Sakura, Minimal), avec des contrôles dessinés en icônes, lisibles dans tous les thèmes
+- 🔀 Modes aléatoire et répétition (toute la liste, ou une seule piste) ; **Précédent** revient d'abord au début du morceau, comme sur la plupart des lecteurs
 - 🔊 Contrôle du volume
-- 🏷️ Lecture des tags ID3 (titre, artiste, BPM)
-- 🖼️ Pochette d'album depuis le dossier de la beatmap
-- 🎬 Vidéos des beatmaps, muettes et calées sur la musique, en grand quand la liste est masquée (☰) ; les contrôles posés dessus s'effacent quand on ne s'en sert pas
-- 🎛️ Visualiseur du spectre pour les pistes sans vidéo : des barres dans la fenêtre, un anneau dans la sphère
-- 📌 Épingle au premier plan, en option, dans la barre de titre et la sphère (sous WSL, l'appli le demande à Windows ; sous Wayland, une appli ne peut pas s'épingler elle-même : passe par le menu de la fenêtre, Alt+Espace sous GNOME → « Toujours au premier plan »)
+- 🏷️ Lecture des tags ID3 (titre, artiste), avec repli sur le nom du dossier
+- 🖼️ Pochette et image de fond de la beatmap
+- 🎬 Vidéos des beatmaps, muettes et calées sur la musique, en grand quand la liste est masquée (☰)
+- 🎛️ Visualiseur du spectre pour les pistes sans vidéo : des barres dans la fenêtre, un anneau dans la sphère. Il analyse une copie silencieuse de la piste : le son que tu entends n'en dépend jamais
+- ✨ Pendant la lecture, les contrôles s'effacent quand tu ne t'en sers pas, pour laisser voir la vidéo, le visualiseur ou l'image de fond, nette (Réglages → Videos)
+- 🔵 Mode sphère : une fenêtre ronde avec la liste des pistes à l'intérieur
+- 📌 Épingle au premier plan, en option, dans la barre de titre et la sphère — voir [Premier plan](#premier-plan)
+- ⚡ Cache des métadonnées : le premier scan est lent, les lancements suivants sont instantanés ; la piste suivante est préchargée pour démarrer tout de suite
 - 💾 Paramètres sauvegardés entre les sessions
-- 🪟 Fenêtre sans bordure, déplaçable
+- 🪟 Fenêtre sans bordure : déplace-la par la barre de titre, redimensionne-la par ses bords ou la poignée en bas à droite
 
 ## Captures d'écran
 
@@ -35,11 +42,11 @@ Tu préfères compiler toi-même ? Voir [Démarrage rapide](#démarrage-rapide).
 
 ## Prérequis
 
-- [Node.js 18+](https://nodejs.org/) LTS version
+- [Node.js 18+](https://nodejs.org/) version LTS
 - [Rust (stable)](https://rustup.rs/) ou `winget install Rustlang.Rustup` puis `rustup default stable`
-- [Prérequis Tauri pour Windows](https://v2.tauri.app/start/prerequisites/)
-  - Microsoft C++ Build Tools `winget install Microsoft.VisualStudio.2022.BuildTools`
-  - WebView2
+- [Prérequis Tauri](https://v2.tauri.app/start/prerequisites/) de ta plateforme :
+  - **Windows** — Microsoft C++ Build Tools (`winget install Microsoft.VisualStudio.2022.BuildTools`, avec la charge de travail C++) et WebView2 (inclus dans Windows 11, installeur disponible pour Windows 10)
+  - **Linux** — `sudo apt install libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev` (Debian/Ubuntu ; voir la doc Tauri pour les autres distributions), plus `gstreamer1.0-plugins-good gstreamer1.0-libav` pour lire les MP3 et les vidéos
 
 ## Démarrage rapide
 
@@ -60,27 +67,58 @@ npm run tauri build
 
 ```
 osu-player/
-├── src/                      # Frontend React
+├── src/                        # Frontend React
 │   ├── components/
-│   │   ├── Player/           # PlayerBar (contrôles, progression)
-│   │   ├── Library/          # Liste des pistes + recherche
-│   │   ├── Settings/         # Thèmes, sélecteur de dossier
-│   │   ├── SphereView/       # Mode sphère
-│   │   └── BeatmapVideo/     # Vidéo de la beatmap, muette, calée sur la musique
+│   │   ├── BeatmapVideo/       # Vidéo de la beatmap, muette, calée sur la musique
+│   │   ├── Icons/              # Icônes SVG des contrôles (couleur du thème)
+│   │   ├── Library/            # Liste des pistes, recherche, favoris, playlists, filtres BPM et vidéo
+│   │   ├── PinButton/          # Épingle au premier plan, et la marche à suivre là où l'appli ne peut pas
+│   │   ├── Player/             # PlayerBar : contrôles, progression, pochette
+│   │   ├── ResizeHandles/      # Bords et poignée de redimensionnement de la fenêtre sans bordure
+│   │   ├── Settings/           # Sélecteur de dossier, thèmes, options des vidéos
+│   │   ├── SphereView/         # Mode sphère
+│   │   ├── Stage/              # Vidéo ou visualiseur en grand quand la liste est masquée
+│   │   └── Visualizer/         # Barres et anneau du spectre
 │   ├── hooks/
-│   │   ├── useAudio.ts       # Moteur de lecture (<audio> natif, préchargement de la suivante)
-│   │   └── useTheme.ts       # Thèmes via variables CSS
+│   │   ├── useAlwaysOnTop.ts   # Applique l'épingle : par la fenêtre, ou par Windows sous WSL
+│   │   ├── useAudio.ts         # Moteur de lecture (<audio> natif, préchargement de la suivante)
+│   │   ├── useAutoHide.ts      # Efface les contrôles après un moment sans bouger le pointeur
+│   │   ├── useTheme.ts         # Thèmes par variables CSS + 4 thèmes intégrés
+│   │   └── useVirtualRows.ts   # N'affiche que les lignes visibles des listes de pistes
+│   ├── lib/
+│   │   ├── audioAnalysis.ts    # Analyse Web Audio d'une copie silencieuse de la piste, pour le visualiseur
+│   │   └── localMedia.ts       # Adresses des médias : asset:// ou le serveur média sous Linux
 │   ├── stores/
-│   │   └── playerStore.ts    # État global Zustand
-│   ├── types/index.ts        # Interfaces TypeScript
+│   │   └── playerStore.ts      # État global Zustand (sauvegardés : dossier, volume, thème, favoris, playlists, options)
+│   ├── types/index.ts          # Interfaces TypeScript
 │   └── styles/globals.css
-├── src-tauri/                # Backend Rust
-│   └── src/
-│       ├── lib.rs            # Commandes Tauri : scan, cache, mode sphère, serveur média
-│       ├── osu_parse.rs      # Lecture des .osu : BPM, fond, vidéo
-│       └── media_server.rs   # Serveur HTTP local des médias (Linux)
-└── tauri.conf.json
+└── src-tauri/                  # Backend Rust
+    └── src/
+        ├── lib.rs              # Commandes Tauri : scan, cache, mode sphère, serveur média, premier plan
+        ├── osu_parse.rs        # Lecture des .osu : BPM, fond, vidéo
+        ├── media_server.rs     # Serveur HTTP local des médias (Linux)
+        └── wsl_pin.rs          # Premier plan sous WSL, demandé à Windows par PowerShell
 ```
+
+## Mode sphère
+
+Clique sur **◎** dans la barre de titre pour passer en mode sphère : une fenêtre ronde de 360×360. L'épingle de son coin haut gauche, comme celle de la barre de titre, la garde au-dessus des autres fenêtres. L'image de fond de la beatmap, ou sa vidéo, remplit la sphère. Déplace la sphère depuis n'importe quel point libre. Pendant la lecture, la liste et les contrôles s'effacent après un moment sans bouger le pointeur, pour laisser voir la vidéo, le visualiseur ou l'image de fond, nette ; ils reviennent dès que le pointeur bouge (Réglages → Videos pour le désactiver). Clique sur **⊡** pour revenir au mode normal.
+
+## Premier plan
+
+Clique sur l'épingle de la barre de titre, ou du coin haut gauche de la sphère, pour garder la fenêtre au-dessus des autres ; reclique pour la libérer. Le choix est mémorisé et vaut pour les deux modes. Désactivée par défaut.
+
+- **Windows, macOS, Linux sous X11** — la fenêtre s'épingle elle-même.
+- **WSL** — la fenêtre est affichée par Windows (WSLg) : l'appli demande à Windows de l'épingler, par `powershell.exe`. La première fois prend une à deux secondes. Si Windows refuse, l'épingle se désactive et son message dit pourquoi.
+- **Wayland, hors WSL** — une appli ne peut pas s'y garder elle-même au premier plan. Demande-le à ton bureau : sous GNOME, **Alt+Espace** puis **« Toujours au premier plan »**.
+
+## Réglages
+
+Ouvre-les avec **⚙** dans la barre de lecture.
+
+- **Dossier Songs** — choisis ton dossier osu! `Songs` et scanne-le. Le scan est mis en cache, et refait seulement quand le contenu du dossier change.
+- **Thèmes** — Dark, Glass, Sakura, Minimal.
+- **Videos** — *Hide controls while playing* : dans la sphère et la barre de lecture, les contrôles s'effacent après un moment sans bouger le pointeur, et reviennent dès qu'il bouge. *Visualizer for tracks without a video* : désactive-le pour voir l'image de fond à la place.
 
 ## Créer un thème personnalisé
 
@@ -101,12 +139,14 @@ Les thèmes sont définis dans `src/hooks/useTheme.ts`, sous forme d'objets de v
 ## Feuille de route
 
 - [ ] Chargeur de thèmes personnalisés depuis un fichier
-- [ ] Mode mini widget (toujours au premier plan, compact)
-- [ ] Parseur de fichiers `.osu` pour l'affichage du BPM
-- [ ] Gestion des playlists / file de lecture
+- [x] Mode mini widget (toujours au premier plan, compact) : le mode sphère et son épingle
+- [x] Parseur de fichiers `.osu` pour l'affichage du BPM
+- [x] Gestion des playlists
+- [ ] File de lecture
 - [ ] Raccourcis clavier globaux
 - [ ] Icône dans la barre des tâches (system tray)
 - [ ] Android / iOS (Tauri 2.0 mobile)
+- [x] Visualiseur (spectre) pour les pistes sans vidéo
 - [ ] Visualiseur de forme d'onde
 
 ## Crédits
