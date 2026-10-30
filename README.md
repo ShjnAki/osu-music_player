@@ -28,7 +28,7 @@ Want to build it yourself instead? See [Getting Started](#getting-started).
 - 🎬 Beatmap videos, muted and synced to the music, shown large when you hide the library (☰); the controls over them fade out while you're not using them
 - 🎛️ Spectrum visualizer for tracks without a video: bars in the window, a ring in the sphere
 - 🔵 Sphere mode — circular window with track list inside
-- 📌 Optional always-on-top pin, in the titlebar and the sphere (on Wayland, apps can't pin themselves: use the window menu, Alt+Space on GNOME → Always on Top)
+- 📌 Optional always-on-top pin, in the titlebar and the sphere (under WSL, the app asks Windows; on Wayland, apps can't pin themselves: use the window menu, Alt+Space on GNOME → Always on Top)
 - ⚡ Metadata cache: first scan is slow, subsequent launches load instantly
 - 💾 Settings persisted between sessions
 - 🪟 Frameless, draggable window

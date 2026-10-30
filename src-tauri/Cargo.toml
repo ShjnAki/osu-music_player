@@ -25,6 +25,8 @@ walkdir = "2"
 id3 = "1"
 # Déjà compilé pour Tauri : décode les chemins dans les URL du serveur média.
 percent-encoding = "2"
+# Déjà compilé pour Tauri : encode le script PowerShell de l'épingle sous WSL.
+base64 = "0.22"
 
 [profile.release]
 codegen-units = 1

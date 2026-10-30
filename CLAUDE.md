@@ -47,11 +47,11 @@ Commands registered in `lib.rs`:
 - `load_tracks_cache` / `save_tracks_cache` — the metadata cache. Bump `CACHE_VERSION` whenever `Track` gains a field, or old caches keep being served without it.
 - `set_sphere_mode(enabled)` — resizes the window in logical pixels (360×360 sphere, 380×580 normal), lifting the config's minimum size and resizability while in sphere mode.
 - `media_base_url()` — the Linux media server's base URL, `null` elsewhere.
-- `always_on_top_supported()` — `false` under Wayland, where GTK 3 ignores keep-above (its Wayland `set_keep_above` is empty) and the protocol has no such request. `useAlwaysOnTop` applies the store's `alwaysOnTop` to the window elsewhere, in both modes; on Wayland, `PinButton` explains the compositor's window menu instead (Alt+Space on GNOME).
+- `always_on_top_support()` — how the window can stay on top: `native` (Windows, macOS, X11), `wsl` (WSLg windows are shown by Windows, so `set_wsl_topmost(enabled)` asks Windows through `powershell.exe` to `SetWindowPos` the window bearing our title; see `wsl_pin.rs`), or `none` under Wayland outside WSL, where GTK 3 ignores keep-above (its Wayland `set_keep_above` is empty) and the protocol has no such request. `useAlwaysOnTop` applies the store's `alwaysOnTop` accordingly, in both modes; `PinButton` explains the compositor's window menu on Wayland (Alt+Space on GNOME), and PowerToys' Always On Top if Windows refuses under WSL.
 
 Commands that touch the disk are declared `#[tauri::command(async)]`: a synchronous command runs on the main thread, which also drives the window, and froze it during a scan.
 
-`osu_parse.rs` holds the pure `.osu` parsers (`parse_dominant_bpm`, `parse_background_filename`, `parse_video`). `media_server.rs` (Linux only) is a standard-library HTTP server with `Range` support: it listens on 127.0.0.1 on a random port, requires a random token in every URL and an exact `Host` header, and only serves files the asset protocol scope allows. It answers with `Access-Control-Allow-Origin: *` so that Web Audio can analyse the sound.
+`wsl_pin.rs` detects WSL from the kernel release and builds the PowerShell script (C# 5, for Windows PowerShell 5.1), sent with `-EncodedCommand`. `osu_parse.rs` holds the pure `.osu` parsers (`parse_dominant_bpm`, `parse_background_filename`, `parse_video`). `media_server.rs` (Linux only) is a standard-library HTTP server with `Range` support: it listens on 127.0.0.1 on a random port, requires a random token in every URL and an exact `Host` header, and only serves files the asset protocol scope allows. It answers with `Access-Control-Allow-Origin: *` so that Web Audio can analyse the sound.
 
 ### Key constraints
 

@@ -3,6 +3,7 @@
 #[cfg(target_os = "linux")]
 mod media_server;
 mod osu_parse;
+mod wsl_pin;
 
 use id3::TagLike;
 use serde::{Deserialize, Serialize};
@@ -497,17 +498,42 @@ fn is_wayland_session(wayland_display: Option<&str>, gdk_backend: Option<&str>) 
     }
 }
 
-/// Faux quand la fenêtre ne peut pas se mettre elle-même au premier plan :
-/// sous Wayland, GTK 3 ignore la demande (son set_keep_above y est vide) et le
-/// protocole ne la prévoit pas. Seul le compositeur peut alors le faire, par
-/// le menu de la fenêtre.
+/// Comment garder la fenêtre au premier plan :
+/// - « native » : la fenêtre le fait elle-même (Windows, macOS, X11) ;
+/// - « wsl » : Windows affiche la fenêtre, c'est à lui de le faire
+///   (set_wsl_topmost), quel que soit le backend de GDK ;
+/// - « none » : sous Wayland, GTK 3 ignore la demande (son set_keep_above y
+///   est vide) et le protocole ne la prévoit pas ; seul le compositeur peut
+///   alors le faire, par le menu de la fenêtre.
+fn pin_support(linux: bool, wsl: bool, wayland: bool) -> &'static str {
+    match (linux, wsl, wayland) {
+        (true, true, _) => "wsl",
+        (true, false, true) => "none",
+        _ => "native",
+    }
+}
+
 #[tauri::command]
-fn always_on_top_supported() -> bool {
-    !(cfg!(target_os = "linux")
-        && is_wayland_session(
+fn always_on_top_support() -> &'static str {
+    let linux = cfg!(target_os = "linux");
+    pin_support(
+        linux,
+        linux && wsl_pin::is_wsl(),
+        is_wayland_session(
             std::env::var("WAYLAND_DISPLAY").ok().as_deref(),
             std::env::var("GDK_BACKEND").ok().as_deref(),
-        ))
+        ),
+    )
+}
+
+/// Épingle la fenêtre côté Windows quand l'appli tourne sous WSL. Lancer
+/// PowerShell prend une à deux secondes : hors du fil principal.
+#[tauri::command(async)]
+fn set_wsl_topmost(app: tauri::AppHandle, enabled: bool) -> Result<(), String> {
+    use tauri::Manager;
+    let win = app.get_webview_window("main").ok_or("window not found")?;
+    let title = win.title().map_err(|e| e.to_string())?;
+    wsl_pin::set_topmost(&title, enabled)
 }
 
 /// Adresse du serveur média local, ou rien hors Linux, où asset:// suffit.
@@ -553,7 +579,8 @@ pub fn run() {
             save_tracks_cache,
             set_sphere_mode,
             media_base_url,
-            always_on_top_supported,
+            always_on_top_support,
+            set_wsl_topmost,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -753,6 +780,19 @@ mod tests {
         assert!(!is_wayland_session(Some("wayland-0"), Some("x11")));
         assert!(!is_wayland_session(Some("wayland-0"), Some("x11,wayland")));
         assert!(is_wayland_session(None, Some("wayland,x11")));
+    }
+
+    #[test]
+    fn sous_wsl_c_est_windows_qui_epingle() {
+        assert_eq!(pin_support(true, true, true), "wsl");
+        assert_eq!(pin_support(true, true, false), "wsl");
+    }
+
+    #[test]
+    fn epingle_impossible_sous_wayland_hors_wsl() {
+        assert_eq!(pin_support(true, false, true), "none");
+        assert_eq!(pin_support(true, false, false), "native");
+        assert_eq!(pin_support(false, false, false), "native");
     }
 
     #[test]

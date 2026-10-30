@@ -40,7 +40,7 @@ export default function App() {
     showSettings, setShowSettings, showLibrary, isSphereMode, toggleSphereMode,
   } = usePlayerStore();
   const [scanError, setScanError] = useState<string | null>(null);
-  const canPin = useAlwaysOnTop();
+  const pin = useAlwaysOnTop();
 
   useEffect(() => { loadOrScan(); }, []);
 
@@ -119,7 +119,7 @@ export default function App() {
     return (
       <div className="app sphere-mode">
         <SphereView onToggle={toggle} onSeek={seek} onPrevious={previous} />
-        <PinButton supported={canPin} className="sphere-pin-btn" hintPlacement="sphere" />
+        <PinButton pin={pin} className="sphere-pin-btn" hintPlacement="sphere" />
         <button
           className="sphere-exit-btn"
           onClick={toggleSphereMode}
@@ -134,7 +134,7 @@ export default function App() {
       <div className="titlebar" onMouseDown={startTitlebarDrag}>
         <span className="titlebar-title">osu! player</span>
         <div className="titlebar-actions">
-          <PinButton supported={canPin} className="titlebar-btn" hintPlacement="titlebar" />
+          <PinButton pin={pin} className="titlebar-btn" hintPlacement="titlebar" />
           <button className="titlebar-btn" onClick={toggleSphereMode} title="Sphere mode">◎</button>
           <button className="titlebar-btn" onClick={() => getCurrentWindow().minimize()}>—</button>
           <button className="titlebar-btn" onClick={() => getCurrentWindow().close()}>×</button>

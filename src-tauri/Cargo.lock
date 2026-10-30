@@ -2156,6 +2156,7 @@ dependencies = [
 name = "osu-player"
 version = "0.2.0"
 dependencies = [
+ "base64 0.22.1",
  "id3",
  "percent-encoding",
  "serde",
