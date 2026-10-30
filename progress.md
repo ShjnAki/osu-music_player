@@ -50,8 +50,9 @@ fil des livraisons.
 
 ## En attente de l'utilisateur
 
-- Pousser le tag `v0.3.1` (nouvelle icône, carré de la sphère sous Windows) :
-  `git fetch origin && git tag v0.3.1 origin/main && git push origin v0.3.1`.
+- Pousser le tag `v0.3.2` (vidéo découpée en cercle dans la sphère sous
+  Windows, titre dans le statut Discord) : `git fetch origin && git tag v0.3.2
+  origin/main && git push origin v0.3.2`.
 - Dire quel nom donner à l'appli : l'application Discord s'appelle « Osu! Media
   Player », la fenêtre « osu! Player », le produit installé `osu-player`.
 
