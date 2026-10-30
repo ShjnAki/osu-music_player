@@ -490,6 +490,10 @@ async fn set_sphere_mode(app: tauri::AppHandle, enabled: bool) -> Result<(), Str
     // qui le décide, dans les deux modes.
     win.set_size(tauri::Size::Logical(window_size(enabled)))
         .map_err(|e| e.to_string())?;
+    // Sous Windows, l'ombre système d'une fenêtre sans bordure s'accompagne
+    // d'un liseré et d'un cadre qui transparaissent derrière les coins
+    // transparents : la sphère apparaissait dans un carré. Sans effet ailleurs.
+    win.set_shadow(!enabled).map_err(|e| e.to_string())?;
     Ok(())
 }
 

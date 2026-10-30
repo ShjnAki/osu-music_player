@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.3.1] - 2026-10-30
+
+### Changed
+- New app icon (window, taskbar, installer, favicon): a glossy pink sphere with the visualizer ring and a note, the same image as the Discord application.
+
+### Fixed
+- The tray icon had no tooltip; it now shows "osu! Player". It is no longer drawn as a macOS template either, which would have turned the colored icon into a plain silhouette.
+- Sphere mode on Windows showed a translucent square around the circle: the system shadow of a frameless window brings a border and a frame that show through its transparent corners. The shadow is now off while in sphere mode.
+
 ## [0.3.0] - 2026-10-30
 
 ### Added

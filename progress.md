@@ -46,11 +46,14 @@ fil des livraisons.
 - Version 0.3.0 (CHANGELOG, README) publiée : `.msi`/`.exe` Windows,
   `.AppImage`/`.deb`/`.rpm` Linux. Les prochains tags publient leur release
   directement ; `publish-release.yml` publie un brouillon resté en plan.
+  Testé sous Windows par l'utilisateur : Discord et l'épingle fonctionnent.
 
 ## En attente de l'utilisateur
 
-- Dans le portail Discord (application 1565740250511183997), Rich Presence →
-  Art Assets : ajouter `docs/discord-icon.png` sous le nom `logo`.
+- Pousser le tag `v0.3.1` (nouvelle icône, carré de la sphère sous Windows) :
+  `git fetch origin && git tag v0.3.1 origin/main && git push origin v0.3.1`.
+- Dire quel nom donner à l'appli : l'application Discord s'appelle « Osu! Media
+  Player », la fenêtre « osu! Player », le produit installé `osu-player`.
 
 ## Pistes pour plus tard
 
