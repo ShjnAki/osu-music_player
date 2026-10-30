@@ -40,9 +40,9 @@
 .library-count { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
 
 /* BPM filter toggle */
-.bpm-toggle { font-size: 11px; padding: 4px 8px; border-radius: 6px; background: var(--bg-tertiary); color: var(--text-muted); border: 1px solid var(--border); white-space: nowrap; }
-.bpm-toggle:hover { color: var(--text-primary); }
-.bpm-toggle.active { color: var(--accent); border-color: var(--accent); }
+.bpm-toggle, .video-toggle { font-size: 11px; padding: 4px 8px; border-radius: 6px; background: var(--bg-tertiary); color: var(--text-muted); border: 1px solid var(--border); white-space: nowrap; }
+.bpm-toggle:hover, .video-toggle:hover { color: var(--text-primary); }
+.bpm-toggle.active, .video-toggle.active { color: var(--accent); border-color: var(--accent); }
 
 /* BPM range inputs */
 .bpm-filter { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-bottom: 1px solid var(--border); background: var(--bg-secondary); font-size: 11px; color: var(--text-muted); }
@@ -61,6 +61,7 @@
 
 .track-thumb { width: 28px; flex-shrink: 0; text-align: center; font-size: 13px; color: var(--text-muted); }
 .track-playing { color: var(--accent); font-size: 12px; }
+.track-video { color: var(--accent); display: inline-flex; vertical-align: middle; }
 
 .track-info { flex: 1; overflow: hidden; }
 .track-title { font-size: 13px; font-weight: 500; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

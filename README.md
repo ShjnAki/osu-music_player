@@ -18,7 +18,7 @@ Want to build it yourself instead? See [Getting Started](#getting-started).
 ## Features
 
 - 🎵 Plays MP3 and OGG files from your osu! Songs folder
-- 📋 Library with search (title / artist) and BPM range filter
+- 📋 Library with search (title / artist), BPM range filter and a filter for tracks with a video
 - ❤️ Favorites and manual playlists
 - 🎨 4 built-in themes (Dark, Glass, Sakura, Minimal)
 - 🔀 Shuffle & repeat modes

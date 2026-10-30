@@ -6,6 +6,8 @@ interface PlayerState {
   tracks: Track[];
   searchQuery: string;
   bpmFilter: [number, number] | null;
+  /** Seulement les pistes qui ont une vidéo : pour en voir le rendu sans les chercher. */
+  videoOnly: boolean;
   favoritesOnly: boolean;
   favoriteIds: Set<string>;
   playlists: Playlist[];
@@ -29,6 +31,7 @@ interface PlayerState {
   setTracks: (tracks: Track[]) => void;
   setSearchQuery: (q: string) => void;
   setBpmFilter: (range: [number, number] | null) => void;
+  setVideoOnly: (v: boolean) => void;
   setFavoritesOnly: (v: boolean) => void;
   toggleFavorite: (id: string) => void;
   createPlaylist: (name: string) => void;
@@ -61,12 +64,14 @@ export function filterTracks(
   favoritesOnly: boolean,
   favoriteIds: Set<string>,
   playlistTrackIds: string[] | null,
+  videoOnly = false,
 ): Track[] {
   let result = playlistTrackIds
     ? tracks.filter(t => playlistTrackIds.includes(t.id))
     : tracks;
   if (favoritesOnly) result = result.filter(t => favoriteIds.has(t.id));
   if (bpmFilter) result = result.filter(t => t.bpm != null && t.bpm >= bpmFilter[0] && t.bpm <= bpmFilter[1]);
+  if (videoOnly) result = result.filter(t => t.videoPath);
   if (query) {
     const q = query.toLowerCase();
     result = result.filter(t => t.title.toLowerCase().includes(q) || t.artist.toLowerCase().includes(q));
@@ -76,7 +81,7 @@ export function filterTracks(
 
 function visibleTracks(s: PlayerState): Track[] {
   const playlist = s.playlists.find(p => p.id === s.activePlaylistId);
-  return filterTracks(s.tracks, s.searchQuery, s.bpmFilter, s.favoritesOnly, s.favoriteIds, playlist?.trackIds ?? null);
+  return filterTracks(s.tracks, s.searchQuery, s.bpmFilter, s.favoritesOnly, s.favoriteIds, playlist?.trackIds ?? null, s.videoOnly);
 }
 
 /**
@@ -95,7 +100,7 @@ export function predictNextTrack(s: PlayerState): Track | null {
 export const usePlayerStore = create<PlayerState>()(
   persist(
     (set, get) => ({
-      tracks: [], searchQuery: '', bpmFilter: null,
+      tracks: [], searchQuery: '', bpmFilter: null, videoOnly: false,
       favoritesOnly: false, favoriteIds: new Set<string>(),
       playlists: [], activePlaylistId: null,
       songsFolder: '', isScanning: false,
@@ -106,6 +111,7 @@ export const usePlayerStore = create<PlayerState>()(
       setTracks: (tracks) => set({ tracks }),
       setSearchQuery: (searchQuery) => set({ searchQuery }),
       setBpmFilter: (bpmFilter) => set({ bpmFilter }),
+      setVideoOnly: (videoOnly) => set({ videoOnly }),
       setFavoritesOnly: (favoritesOnly) => set({ favoritesOnly }),
       toggleFavorite: (id) => set((s) => {
         const next = new Set(s.favoriteIds);
@@ -162,9 +168,9 @@ export const usePlayerStore = create<PlayerState>()(
       },
 
       prevTrack: () => {
-        const { currentTrack, tracks, searchQuery, bpmFilter, favoritesOnly, favoriteIds, playlists, activePlaylistId, progress } = get();
-        const playlist = playlists.find(p => p.id === activePlaylistId);
-        const visible = filterTracks(tracks, searchQuery, bpmFilter, favoritesOnly, favoriteIds, playlist?.trackIds ?? null);
+        const state = get();
+        const { currentTrack, progress } = state;
+        const visible = visibleTracks(state);
         if (!visible.length) return;
         if (progress > 0.05) { set({ progress: 0, audioTime: 0, status: 'loading' }); return; }
         const idx = visible.findIndex((t) => t.id === currentTrack?.id);

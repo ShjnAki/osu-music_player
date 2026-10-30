@@ -33,17 +33,20 @@ interface Props {
 
 export function SphereView({ onToggle, onSeek }: Props) {
   const {
-    tracks, searchQuery, currentTrack, status, progress,
+    tracks, searchQuery, videoOnly, currentTrack, status, progress,
     isShuffled, repeatMode, setCurrentTrack, nextTrack, prevTrack,
     cycleRepeat, toggleShuffle,
   } = usePlayerStore();
 
   const filtered = useMemo(() => {
     const q = searchQuery.toLowerCase();
-    return q ? tracks.filter(t =>
+    // Le filtre vidéo de la bibliothèque vaut aussi ici : « suivant » ne
+    // parcourt que ces pistes, la liste doit montrer les mêmes.
+    const base = videoOnly ? tracks.filter(t => t.videoPath) : tracks;
+    return q ? base.filter(t =>
       t.title.toLowerCase().includes(q) || t.artist.toLowerCase().includes(q)
-    ) : tracks;
-  }, [tracks, searchQuery]);
+    ) : base;
+  }, [tracks, searchQuery, videoOnly]);
 
   const { containerRef, start, end, totalHeight, offsetTop } =
     useVirtualRows<HTMLDivElement>(filtered.length, SPHERE_TRACK_HEIGHT);

@@ -15,7 +15,7 @@ Tu préfères compiler toi-même ? Voir [Démarrage rapide](#démarrage-rapide).
 ## Fonctionnalités
 
 - 🎵 Lecture des fichiers MP3 et OGG depuis ton dossier osu! Songs
-- 📋 Bibliothèque avec recherche (titre / artiste)
+- 📋 Bibliothèque avec recherche (titre / artiste) et filtre des pistes avec vidéo
 - 🎨 4 thèmes intégrés (Dark, Glass, Sakura, Minimal) — d'autres à venir
 - 🔀 Modes aléatoire et répétition
 - 🔊 Contrôle du volume
