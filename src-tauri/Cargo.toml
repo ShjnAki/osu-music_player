@@ -1,6 +1,6 @@
 [package]
 name = "osu-player"
-version = "0.3.2"
+version = "0.3.3"
 description = "A lightweight osu! music player"
 authors = ["Shin Aki"]
 license = "MIT"

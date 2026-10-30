@@ -1,4 +1,4 @@
-# 🎵 osu! Player
+# 🎵 Osu! Media Player
 
 A lightweight, themeable desktop music player for your osu! beatmap collection.
 
