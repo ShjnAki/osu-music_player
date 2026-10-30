@@ -1,7 +1,7 @@
 #![allow(unused_imports)]
 
-#[cfg(target_os = "linux")]
 mod discord;
+#[cfg(target_os = "linux")]
 mod media_server;
 mod osu_collections;
 mod osu_parse;

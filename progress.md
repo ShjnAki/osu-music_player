@@ -47,9 +47,11 @@ fil des livraisons.
 
 ## En attente de l'utilisateur
 
-- Pousser le tag de la release (l'environnement de Claude ne peut pas pousser
-  de tag) : `git fetch origin && git tag v0.3.0 origin/main && git push origin
-  v0.3.0`. Le workflow `release.yml` construit alors le `.msi` et crée une
+- Repousser le tag de la release (l'environnement de Claude ne peut pas pousser
+  de tag). Le premier `v0.3.0` pointait sur un commit qui ne compilait pas
+  sous Windows (`mod discord` placé sous le `#[cfg(target_os = "linux")]` de
+  `media_server`) : supprimer la release brouillon et le tag, puis le recréer
+  sur `origin/main`. Le workflow `release.yml` construit alors le `.msi` et crée une
   release en brouillon, à publier sur GitHub (Releases → Edit → Publish).
 - Dans le portail Discord (application 1565740250511183997), Rich Presence →
   Art Assets : ajouter `docs/discord-icon.png` sous le nom `logo`.
