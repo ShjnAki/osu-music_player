@@ -1,0 +1,23 @@
+# .github/workflows/publish-release.yml
+name: Publish release
+
+# Publie une release restée en brouillon sans passer par la page des releases :
+# depuis l'onglet Actions (« Run workflow »), ou par l'API.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag de la release à publier (par exemple v0.3.0)"
+        required: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Publish the draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+        run: gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest

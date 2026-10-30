@@ -43,13 +43,12 @@ fil des livraisons.
   les playlists du même nom.
 - Discord Rich Presence (option désactivée par défaut, Windows ou Linux natif,
   pas sous WSL), dans la 0.3.0.
-- Version 0.3.0 (CHANGELOG, README), dans `main`.
+- Version 0.3.0 (CHANGELOG, README) publiée : `.msi`/`.exe` Windows,
+  `.AppImage`/`.deb`/`.rpm` Linux. Les prochains tags publient leur release
+  directement ; `publish-release.yml` publie un brouillon resté en plan.
 
 ## En attente de l'utilisateur
 
-- Publier la release 0.3.0 : le workflow a réussi sous Windows et Linux (tag
-  `v0.3.0` sur `main`) ; la release est en brouillon (Releases → Edit →
-  Publish release).
 - Dans le portail Discord (application 1565740250511183997), Rich Presence →
   Art Assets : ajouter `docs/discord-icon.png` sous le nom `logo`.
 

@@ -51,6 +51,8 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: "osu! Player ${{ github.ref_name }}"
           releaseBody: "Voir CHANGELOG.md pour le détail des changements."
-          releaseDraft: true
+          # Publiée d'emblée : le lien « dernière version » du README ne voit pas
+          # les brouillons.
+          releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
