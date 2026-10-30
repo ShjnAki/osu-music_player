@@ -1,6 +1,7 @@
 #![allow(unused_imports)]
 
 #[cfg(target_os = "linux")]
+mod discord;
 mod media_server;
 mod osu_collections;
 mod osu_parse;
@@ -559,6 +560,18 @@ fn import_osu_collections(
     Ok(osu_collections::import(&collections, &tracks))
 }
 
+/// Fil de Discord Rich Presence ; un Sender n'est pas partageable entre fils
+/// sans verrou.
+struct DiscordPresence(std::sync::Mutex<std::sync::mpsc::Sender<Option<discord::Activity>>>);
+
+/// Affiche (ou efface, avec null) la piste en cours sur le profil Discord.
+#[tauri::command]
+fn set_discord_activity(state: tauri::State<'_, DiscordPresence>, activity: Option<discord::Activity>) {
+    if let Ok(tx) = state.0.lock() {
+        let _ = tx.send(activity);
+    }
+}
+
 /// Adresse du serveur média local, ou rien hors Linux, où asset:// suffit.
 struct MediaBaseUrl(Option<String>);
 
@@ -595,6 +608,9 @@ pub fn run() {
             app.manage(MediaBaseUrl(base_url));
             Ok(())
         })
+        .manage(DiscordPresence(std::sync::Mutex::new(discord::spawn(
+            discord::default_socket_dirs(),
+        ))))
         .invoke_handler(tauri::generate_handler![
             scan_osu_songs,
             default_songs_folder,
@@ -605,6 +621,7 @@ pub fn run() {
             always_on_top_support,
             set_wsl_topmost,
             import_osu_collections,
+            set_discord_activity,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

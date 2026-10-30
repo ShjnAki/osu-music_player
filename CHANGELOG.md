@@ -9,6 +9,7 @@
 - **Always-on-top pin** in the titlebar and the sphere, optional and remembered. Under WSL the app asks Windows through PowerShell; on Wayland, where an app can't pin itself, the button explains the desktop's window menu.
 - **Hide duplicates** (Settings, on by default): one copy of a song found in several beatmap sets (same title, artist and length).
 - **Start at the preview point** (Settings, off by default): tracks start where the beatmap's `PreviewTime` is, like osu!'s song select.
+- **Discord Rich Presence** (Settings → Discord, off by default): "Listening to osu! Player" with the title, the artist and the time left, through Discord's local IPC (no dependency). Needs the Discord app on the same computer, so not through WSL.
 - **Import osu! collections**: the Playlists tab turns osu! stable's `collection.db` into playlists; importing again updates them.
 - Remove a track from a playlist (×).
 - The next track is preloaded so it starts at once; Previous goes back to the start of the track first.

@@ -31,6 +31,7 @@ Tu préfères compiler toi-même ? Voir [Démarrage rapide](#démarrage-rapide).
 - 🎛️ Visualiseur du spectre pour les pistes sans vidéo : des barres dans la fenêtre, un anneau dans la sphère. Il analyse une copie silencieuse de la piste : le son que tu entends n'en dépend jamais
 - ✨ Pendant la lecture, les contrôles s'effacent quand tu ne t'en sers pas, pour laisser voir la vidéo, le visualiseur ou l'image de fond, nette (Réglages → Videos)
 - 🔵 Mode sphère : une fenêtre ronde avec la liste des pistes à l'intérieur
+- 🎧 En option, Discord Rich Presence : ce que tu écoutes, sur ton profil
 - 📌 Épingle au premier plan, en option, dans la barre de titre et la sphère — voir [Premier plan](#premier-plan)
 - ⚡ Cache des métadonnées : le premier scan est lent, les lancements suivants sont instantanés ; la piste suivante est préchargée pour démarrer tout de suite
 - 💾 Paramètres sauvegardés entre les sessions
