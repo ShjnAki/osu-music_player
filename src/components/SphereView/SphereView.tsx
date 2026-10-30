@@ -1,9 +1,9 @@
-import { useMemo, useState, type MouseEvent } from 'react';
+import { useMemo, type MouseEvent } from 'react';
 import { usePlayerStore } from '@/stores/playerStore';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
-import { BeatmapVideo, hasVideo } from '@/components/BeatmapVideo/BeatmapVideo';
+import { BeatmapVideo, useVideoTrack } from '@/components/BeatmapVideo/BeatmapVideo';
 import type { Track } from '@/types';
 import './SphereView.css';
 
@@ -55,11 +55,7 @@ export function SphereView({ onToggle, onSeek }: Props) {
   const bgRaw = currentTrack?.backgroundPath ?? currentTrack?.coverPath ?? null;
   const bgUrl = bgRaw ? convertFileSrc(bgRaw) : null;
 
-  // Codec non pris en charge par la webview : on retombe sur l'image de fond.
-  const [failedVideo, setFailedVideo] = useState<string | null>(null);
-  const videoTrack = hasVideo(currentTrack) && currentTrack.videoPath !== failedVideo
-    ? currentTrack
-    : null;
+  const { videoTrack, markUnavailable } = useVideoTrack(currentTrack);
 
   const formatTime = (secs?: number) => {
     if (!secs) return '0:00';
@@ -75,7 +71,7 @@ export function SphereView({ onToggle, onSeek }: Props) {
           key={videoTrack.id}
           track={videoTrack}
           className="sphere-video"
-          onUnavailable={() => setFailedVideo(videoTrack.videoPath)}
+          onUnavailable={markUnavailable}
         />
       ) : bgUrl && (
         <div className="sphere-bg" style={{ backgroundImage: `url("${bgUrl}")` }} />

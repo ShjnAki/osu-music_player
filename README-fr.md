@@ -21,7 +21,7 @@ Tu préfères compiler toi-même ? Voir [Démarrage rapide](#démarrage-rapide).
 - 🔊 Contrôle du volume
 - 🏷️ Lecture des tags ID3 (titre, artiste, BPM)
 - 🖼️ Pochette d'album depuis le dossier de la beatmap
-- 🎬 Vidéos des beatmaps, muettes et calées sur la musique
+- 🎬 Vidéos des beatmaps, muettes et calées sur la musique, en grand quand la liste est masquée (☰)
 - 💾 Paramètres sauvegardés entre les sessions
 - 🪟 Fenêtre sans bordure, déplaçable
 

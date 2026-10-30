@@ -10,6 +10,7 @@ import { PlayerBar } from '@/components/Player/PlayerBar';
 import { Library } from '@/components/Library/Library';
 import { Settings } from '@/components/Settings/Settings';
 import { SphereView } from '@/components/SphereView/SphereView';
+import { Stage } from '@/components/Stage/Stage';
 import '@/styles/globals.css';
 import './App.css';
 
@@ -129,8 +130,8 @@ export default function App() {
           <Settings onScan={() => handleScan(songsFolder)} isScanning={isScanning} />
         ) : (
           <>
-            {showLibrary && <Library />}
-            <PlayerBar onToggle={toggle} onSeek={seek} />
+            {showLibrary ? <Library /> : <Stage />}
+            <PlayerBar onToggle={toggle} onSeek={seek} showVideo={showLibrary} />
           </>
         )}
       </div>

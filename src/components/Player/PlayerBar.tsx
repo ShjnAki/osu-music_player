@@ -1,12 +1,16 @@
-import { useState } from 'react';
 import { usePlayerStore } from '@/stores/playerStore';
 import { convertFileSrc } from '@tauri-apps/api/core';
-import { BeatmapVideo, hasVideo } from '@/components/BeatmapVideo/BeatmapVideo';
+import { BeatmapVideo, useVideoTrack } from '@/components/BeatmapVideo/BeatmapVideo';
 import './PlayerBar.css';
 
-interface Props { onToggle: () => void; onSeek: (ratio: number) => void; }
+interface Props {
+  onToggle: () => void;
+  onSeek: (ratio: number) => void;
+  /** Faux quand la vidéo passe déjà en grand au-dessus : la décoder deux fois coûterait pour rien. */
+  showVideo: boolean;
+}
 
-export function PlayerBar({ onToggle, onSeek }: Props) {
+export function PlayerBar({ onToggle, onSeek, showVideo }: Props) {
   const {
     currentTrack, status, progress, volume, isMuted,
     isShuffled, repeatMode, setVolume, toggleMute,
@@ -26,11 +30,8 @@ export function PlayerBar({ onToggle, onSeek }: Props) {
   const bgRaw = currentTrack?.backgroundPath ?? currentTrack?.coverPath ?? null;
   const bgUrl = bgRaw ? convertFileSrc(bgRaw) : null;
 
-  // Codec non pris en charge par la webview : on retombe sur l'image de fond.
-  const [failedVideo, setFailedVideo] = useState<string | null>(null);
-  const videoTrack = hasVideo(currentTrack) && currentTrack.videoPath !== failedVideo
-    ? currentTrack
-    : null;
+  const { videoTrack: playableVideo, markUnavailable } = useVideoTrack(currentTrack);
+  const videoTrack = showVideo ? playableVideo : null;
 
   return (
     <div className={`player-bar fade-in ${videoTrack ? 'has-video' : ''}`}>
@@ -39,7 +40,7 @@ export function PlayerBar({ onToggle, onSeek }: Props) {
           key={videoTrack.id}
           track={videoTrack}
           className="player-video"
-          onUnavailable={() => setFailedVideo(videoTrack.videoPath)}
+          onUnavailable={markUnavailable}
         />
       ) : bgUrl && (
         <div
