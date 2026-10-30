@@ -16,9 +16,7 @@
     "@tauri-apps/plugin-shell": "^2.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "zustand": "^4.5.0",
-    "howler": "^2.2.4",
-    "@types/howler": "^2.2.11"
+    "zustand": "^4.5.0"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.0.0",

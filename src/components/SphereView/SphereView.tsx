@@ -80,7 +80,7 @@ export function SphereView({ onToggle, onSeek }: Props) {
       <div className="sphere-bg-overlay" />
 
       {/* Track list */}
-      <div className="sphere-list" data-tauri-drag-region="false" ref={containerRef}>
+      <div className="sphere-list" ref={containerRef}>
         <div style={{ height: totalHeight, position: 'relative' }}>
           <div style={{ transform: `translateY(${offsetTop}px)` }}>
             {filtered.slice(start, end).map((track: Track) => (
@@ -116,7 +116,6 @@ export function SphereView({ onToggle, onSeek }: Props) {
           type="range" min={0} max={1} step={0.001} value={progress}
           onChange={(e) => onSeek(+e.target.value)}
           className="sphere-seek"
-          data-tauri-drag-region="false"
         />
         <span className="sphere-time">{formatTime(currentTrack?.duration)}</span>
       </div>
