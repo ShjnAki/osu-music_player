@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.1] - 2026-10-30
+
+### Changed
+- New app icon (window, taskbar, installer, favicon): a glossy pink sphere with the visualizer ring and a note, the same image as the Discord application.
+
+### Fixed
+- Sphere mode on Windows showed a translucent square around the circle: the system shadow of a frameless window brings a border and a frame that show through its transparent corners. The shadow is now off while in sphere mode.
+
 ## [0.3.0] - 2026-10-30
 
 ### Added
