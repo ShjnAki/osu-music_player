@@ -2,9 +2,9 @@
 name = "osu-player"
 version = "0.2.0"
 description = "A lightweight osu! music player"
-authors = ["you"]
+authors = ["Shin Aki"]
 license = "MIT"
-repository = "https://github.com/you/osu-player"
+repository = "https://github.com/ShjnAki/osu-music_player"
 edition = "2021"
 
 [lib]
