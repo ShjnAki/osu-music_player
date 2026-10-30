@@ -59,7 +59,9 @@ export function SphereView({ onToggle, onSeek, onPrevious }: Props) {
 
   const { videoTrack, markUnavailable } = useVideoTrack(currentTrack);
   const visualizer = showVisualizer && !!currentTrack && !currentTrack.videoPath;
-  const visualFocus = (!!videoTrack || visualizer) && hideControlsOverVideo;
+  // Toute piste a de quoi se montrer une fois les contrôles effacés : sa vidéo,
+  // son spectre, ou à défaut son image de fond, alors nette.
+  const visualFocus = (!!videoTrack || visualizer || !!bgUrl) && hideControlsOverVideo;
   // En pause, les contrôles restent : c'est pour s'en servir qu'on s'arrête.
   const { hidden: controlsHidden, handlers: autoHide } = useAutoHide(visualFocus && status === 'playing');
 
@@ -72,7 +74,7 @@ export function SphereView({ onToggle, onSeek, onPrevious }: Props) {
 
   return (
     <div
-      className={`sphere-view ${videoTrack ? 'has-video' : ''} ${visualFocus ? 'visual-focus' : ''} ${controlsHidden ? 'controls-hidden' : ''}`}
+      className={`sphere-view ${videoTrack ? 'has-video' : ''} ${visualizer ? 'has-visualizer' : ''} ${visualFocus ? 'visual-focus' : ''} ${controlsHidden ? 'controls-hidden' : ''}`}
       {...autoHide}
       onMouseDown={(e) => { autoHide.onMouseDown?.(); startWindowDrag(e); }}
     >

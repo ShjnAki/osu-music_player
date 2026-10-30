@@ -70,6 +70,13 @@ export const MenuIcon = () => (
   <Icon><path d="M4 6h16M4 12h16M4 18h16" /></Icon>
 );
 
+export const PinIcon = ({ pinned }: { pinned: boolean }) => (
+  <Icon>
+    <path d="M8 3h8M12 14v7" />
+    <path d="M9.5 3v6.5L6.5 14h11l-3-4.5V3z" fill={pinned ? 'currentColor' : 'none'} />
+  </Icon>
+);
+
 export const SettingsIcon = () => (
   <Icon>
     <path d="M10 5.3 10.5 2.6 13.5 2.6 14 5.3 15.3 5.8 17.6 4.3 19.7 6.4 18.2 8.7 18.7 10 21.4 10.5 21.4 13.5 18.7 14 18.2 15.3 19.7 17.6 17.6 19.7 15.3 18.2 14 18.7 13.5 21.4 10.5 21.4 10 18.7 8.7 18.2 6.4 19.7 4.3 17.6 5.8 15.3 5.3 14 2.6 13.5 2.6 10.5 5.3 10 5.8 8.7 4.3 6.4 6.4 4.3 8.7 5.8z" strokeWidth={1.6} />

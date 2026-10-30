@@ -23,6 +23,7 @@ Tu préfères compiler toi-même ? Voir [Démarrage rapide](#démarrage-rapide).
 - 🖼️ Pochette d'album depuis le dossier de la beatmap
 - 🎬 Vidéos des beatmaps, muettes et calées sur la musique, en grand quand la liste est masquée (☰) ; les contrôles posés dessus s'effacent quand on ne s'en sert pas
 - 🎛️ Visualiseur du spectre pour les pistes sans vidéo : des barres dans la fenêtre, un anneau dans la sphère
+- 📌 Épingle au premier plan, en option, dans la barre de titre et la sphère (sous Wayland, une appli ne peut pas s'épingler elle-même : passe par le menu de la fenêtre, Alt+Espace sous GNOME → « Toujours au premier plan »)
 - 💾 Paramètres sauvegardés entre les sessions
 - 🪟 Fenêtre sans bordure, déplaçable
 

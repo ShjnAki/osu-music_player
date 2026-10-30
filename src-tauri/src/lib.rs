@@ -475,10 +475,39 @@ async fn set_sphere_mode(app: tauri::AppHandle, enabled: bool) -> Result<(), Str
     let min_size = (!enabled).then(|| tauri::Size::Logical(normal_min_size()));
     win.set_min_size(min_size).map_err(|e| e.to_string())?;
     win.set_resizable(!enabled).map_err(|e| e.to_string())?;
+    // Le premier plan ne dépend plus du mode : c'est l'épingle de l'interface
+    // qui le décide, dans les deux modes.
     win.set_size(tauri::Size::Logical(window_size(enabled)))
         .map_err(|e| e.to_string())?;
-    win.set_always_on_top(enabled).map_err(|e| e.to_string())?;
     Ok(())
+}
+
+/// Vrai si GDK ouvrira la fenêtre sous Wayland : GDK_BACKEND impose son
+/// premier backend, sinon GDK essaie Wayland avant X11 dès qu'un compositeur
+/// Wayland est annoncé.
+fn is_wayland_session(wayland_display: Option<&str>, gdk_backend: Option<&str>) -> bool {
+    let first_backend = gdk_backend
+        .and_then(|b| b.split(',').next())
+        .map(str::trim)
+        .unwrap_or("");
+    match first_backend {
+        "wayland" => true,
+        "" | "*" => wayland_display.is_some_and(|d| !d.is_empty()),
+        _ => false,
+    }
+}
+
+/// Faux quand la fenêtre ne peut pas se mettre elle-même au premier plan :
+/// sous Wayland, GTK 3 ignore la demande (son set_keep_above y est vide) et le
+/// protocole ne la prévoit pas. Seul le compositeur peut alors le faire, par
+/// le menu de la fenêtre.
+#[tauri::command]
+fn always_on_top_supported() -> bool {
+    !(cfg!(target_os = "linux")
+        && is_wayland_session(
+            std::env::var("WAYLAND_DISPLAY").ok().as_deref(),
+            std::env::var("GDK_BACKEND").ok().as_deref(),
+        ))
 }
 
 /// Adresse du serveur média local, ou rien hors Linux, où asset:// suffit.
@@ -524,6 +553,7 @@ pub fn run() {
             save_tracks_cache,
             set_sphere_mode,
             media_base_url,
+            always_on_top_supported,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -704,6 +734,25 @@ mod tests {
         let size = normal_min_size();
         assert_eq!(Some(size.width), window["minWidth"].as_f64());
         assert_eq!(Some(size.height), window["minHeight"].as_f64());
+    }
+
+    #[test]
+    fn wayland_des_qu_un_compositeur_wayland_est_annonce() {
+        assert!(is_wayland_session(Some("wayland-0"), None));
+        assert!(is_wayland_session(Some("wayland-0"), Some("*")));
+    }
+
+    #[test]
+    fn x11_sans_compositeur_wayland() {
+        assert!(!is_wayland_session(None, None));
+        assert!(!is_wayland_session(Some(""), None));
+    }
+
+    #[test]
+    fn gdk_backend_impose_son_premier_backend() {
+        assert!(!is_wayland_session(Some("wayland-0"), Some("x11")));
+        assert!(!is_wayland_session(Some("wayland-0"), Some("x11,wayland")));
+        assert!(is_wayland_session(None, Some("wayland,x11")));
     }
 
     #[test]
