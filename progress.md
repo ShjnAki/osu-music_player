@@ -41,9 +41,15 @@ fil des livraisons.
 - Import des collections osu! stable (`collection.db`) en playlists, bouton
   « Import osu! collections » de l'onglet Playlists ; réimporter met à jour
   les playlists du même nom.
-- Version 0.3.0 (CHANGELOG, README) ; tag `v0.3.0` poussé : le workflow
-  `release.yml` construit le `.msi` et crée une release en brouillon, que
-  l'utilisateur publie sur GitHub (Releases → Edit → Publish).
+- Version 0.3.0 (CHANGELOG, README), dans `main`.
+
+## En attente de l'utilisateur
+
+- Pousser le tag de la release (l'environnement de Claude ne peut pas pousser
+  de tag) : `git fetch origin && git tag v0.3.0 origin/main && git push origin
+  v0.3.0`. Le workflow `release.yml` construit alors le `.msi` et crée une
+  release en brouillon, à publier sur GitHub (Releases → Edit → Publish).
+- Créer l'application Discord et donner son « Application ID ».
 
 ## Demandé, dans cet ordre
 
