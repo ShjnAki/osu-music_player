@@ -22,7 +22,6 @@ export interface Playlist {
 export interface Theme {
   id: string;
   name: string;
-  author?: string;
   variables: ThemeVariables;
 }
 
