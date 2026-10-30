@@ -62,6 +62,7 @@ export default function App() {
     backgroundPath: t.background_path,
     videoPath: t.video_path ?? undefined,
     videoOffsetMs: t.video_offset_ms ?? undefined,
+    previewTimeMs: t.preview_time_ms ?? undefined,
   });
 
   const getCachePath = async () => join(await appLocalDataDir(), 'tracks-cache.json');

@@ -36,21 +36,21 @@ fil des livraisons.
   sous Wayland.
 - README à jour, captures dans `docs/`.
 - Doublons masqués (option « Hide duplicates », activée par défaut).
+- Démarrage au point d'aperçu (option « Start at the preview point »,
+  désactivée par défaut ; `CACHE_VERSION` passé à 5, d'où un rescan).
 
 ## Demandé, dans cet ordre
 
-1. Démarrer au point d'aperçu de la beatmap (`PreviewTime` du `.osu`), en
-   option. Demande un champ de plus dans `Track` : augmenter `CACHE_VERSION`.
-2. Importer les collections osu! (`collection.db`, à côté du dossier Songs)
+1. Importer les collections osu! (`collection.db`, à côté du dossier Songs)
    comme playlists. Les collections désignent les difficultés par le MD5 du
    fichier `.osu` : hacher les `.osu` des dossiers de pistes au moment de
    l'import (pas de crate md5 dans l'arbre : en écrire une petite, testée).
    osu!lazer (`client.realm`) n'est pas pris en charge.
-3. Release Windows (`.msi`) : passer la version à 0.3.0 (`package.json`,
+2. Release Windows (`.msi`) : passer la version à 0.3.0 (`package.json`,
    `tauri.conf.json`, `Cargo.toml`), compléter `CHANGELOG.md`, pousser un tag
    `v0.3.0` ; le workflow `release.yml` crée une release en brouillon que
    l'utilisateur publie sur GitHub.
-4. Discord Rich Presence (Windows) : il faut un « Application ID » créé par
+3. Discord Rich Presence (Windows) : il faut un « Application ID » créé par
    l'utilisateur sur le portail développeur de Discord. IPC par le tube nommé
    `\\.\pipe\discord-ipc-0`, sans crate.
 

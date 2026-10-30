@@ -36,6 +36,8 @@ interface PlayerState {
   alwaysOnTop: boolean;
   /** Un seul exemplaire d'un morceau présent dans plusieurs beatmaps. */
   hideDuplicates: boolean;
+  /** Démarre les pistes à leur point d'aperçu, comme le menu d'osu!. */
+  startAtPreview: boolean;
 
   setTracks: (tracks: Track[]) => void;
   setSearchQuery: (q: string) => void;
@@ -65,6 +67,7 @@ interface PlayerState {
   setShowVisualizer: (v: boolean) => void;
   setAlwaysOnTop: (v: boolean) => void;
   setHideDuplicates: (v: boolean) => void;
+  setStartAtPreview: (v: boolean) => void;
   nextTrack: () => void;
   prevTrack: () => void;
 }
@@ -169,6 +172,7 @@ export const usePlayerStore = create<PlayerState>()(
       showVisualizer: true,
       alwaysOnTop: false,
       hideDuplicates: true,
+      startAtPreview: false,
 
       setTracks: (tracks) => set({ tracks }),
       setSearchQuery: (searchQuery) => set({ searchQuery }),
@@ -222,6 +226,7 @@ export const usePlayerStore = create<PlayerState>()(
       setShowVisualizer: (showVisualizer) => set({ showVisualizer }),
       setAlwaysOnTop: (alwaysOnTop) => set({ alwaysOnTop }),
       setHideDuplicates: (hideDuplicates) => set({ hideDuplicates }),
+      setStartAtPreview: (startAtPreview) => set({ startAtPreview }),
 
       nextTrack: () => {
         const state = get();
@@ -257,6 +262,7 @@ export const usePlayerStore = create<PlayerState>()(
         showVisualizer: s.showVisualizer,
         alwaysOnTop: s.alwaysOnTop,
         hideDuplicates: s.hideDuplicates,
+        startAtPreview: s.startAtPreview,
       }),
       merge: (persisted: any, current) => ({
         ...current,

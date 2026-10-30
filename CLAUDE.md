@@ -42,7 +42,7 @@ The Library and sphere track lists are virtualized by `useVirtualRows`: only vis
 ### Rust backend (`src-tauri/src/`)
 
 Commands registered in `lib.rs`:
-- `scan_osu_songs(folder_path)` — walks up to 3 levels deep, keeps audio files that pass `is_main_audio` (excludes osu! hitsounds by name), reads ID3 tags for MP3s with a fallback to the folder name (`"<id> Artist - Title"`), reads background, dominant BPM and video (with its offset) from the first `.osu` file, falls back to a loose `.mp4`/`.m4v`/`.webm` in the folder, and drops tracks outside 30–600 s.
+- `scan_osu_songs(folder_path)` — walks up to 3 levels deep, keeps audio files that pass `is_main_audio` (excludes osu! hitsounds by name), reads ID3 tags for MP3s with a fallback to the folder name (`"<id> Artist - Title"`), reads background, dominant BPM, video (with its offset) and preview point (`PreviewTime`, where the `startAtPreview` option makes `useAudio` start the track) from the first `.osu` file, falls back to a loose `.mp4`/`.m4v`/`.webm` in the folder, and drops tracks outside 30–600 s.
 - `default_songs_folder()` — first existing osu! Songs folder: `C:\osu!\Songs`, `%LOCALAPPDATA%` and every drive letter on Windows; Wine prefixes and `/mnt/*` (WSL) on Linux.
 - `load_tracks_cache` / `save_tracks_cache` — the metadata cache. Bump `CACHE_VERSION` whenever `Track` gains a field, or old caches keep being served without it.
 - `set_sphere_mode(enabled)` — resizes the window in logical pixels (360×360 sphere, 380×580 normal), lifting the config's minimum size and resizability while in sphere mode.
@@ -51,7 +51,7 @@ Commands registered in `lib.rs`:
 
 Commands that touch the disk are declared `#[tauri::command(async)]`: a synchronous command runs on the main thread, which also drives the window, and froze it during a scan.
 
-`wsl_pin.rs` detects WSL from the kernel release and builds the PowerShell script (C# 5, for Windows PowerShell 5.1), sent with `-EncodedCommand`. The script answers `OK <n>` or `FAIL <reason>` (Windows error code, or the titles of the WSLg windows, owned by `msrdc`), and `PinButton` shows that reason until clicked. `osu_parse.rs` holds the pure `.osu` parsers (`parse_dominant_bpm`, `parse_background_filename`, `parse_video`). `media_server.rs` (Linux only) is a standard-library HTTP server with `Range` support: it listens on 127.0.0.1 on a random port, requires a random token in every URL and an exact `Host` header, and only serves files the asset protocol scope allows. It answers with `Access-Control-Allow-Origin: *` so that Web Audio can analyse the sound.
+`wsl_pin.rs` detects WSL from the kernel release and builds the PowerShell script (C# 5, for Windows PowerShell 5.1), sent with `-EncodedCommand`. The script answers `OK <n>` or `FAIL <reason>` (Windows error code, or the titles of the WSLg windows, owned by `msrdc`), and `PinButton` shows that reason until clicked. `osu_parse.rs` holds the pure `.osu` parsers (`parse_dominant_bpm`, `parse_background_filename`, `parse_video`, `parse_preview_time`). `media_server.rs` (Linux only) is a standard-library HTTP server with `Range` support: it listens on 127.0.0.1 on a random port, requires a random token in every URL and an exact `Host` header, and only serves files the asset protocol scope allows. It answers with `Access-Control-Allow-Origin: *` so that Web Audio can analyse the sound.
 
 ### Key constraints
 

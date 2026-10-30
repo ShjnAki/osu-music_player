@@ -144,6 +144,12 @@ export function useAudio() {
       if (audio.error) { setStatus('error'); return; }
 
       const start = () => {
+        // Seulement au lancement de la piste : « précédent » et la répétition
+        // d'une piste reviennent, eux, au vrai début.
+        const preview = (currentTrack.previewTimeMs ?? 0) / 1000;
+        if (usePlayerStore.getState().startAtPreview && preview > 0 && !(audio.duration <= preview)) {
+          audio.currentTime = preview;
+        }
         // Rejet attendu si la piste est quittée avant de démarrer (AbortError) ;
         // les vraies erreurs de lecture arrivent par l'évènement `error`.
         audio.play().catch(() => {});
