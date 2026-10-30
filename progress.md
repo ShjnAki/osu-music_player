@@ -41,6 +41,8 @@ fil des livraisons.
 - Import des collections osu! stable (`collection.db`) en playlists, bouton
   « Import osu! collections » de l'onglet Playlists ; réimporter met à jour
   les playlists du même nom.
+- Discord Rich Presence (option désactivée par défaut, Windows ou Linux natif,
+  pas sous WSL), dans la 0.3.0.
 - Version 0.3.0 (CHANGELOG, README), dans `main`.
 
 ## En attente de l'utilisateur
@@ -49,13 +51,8 @@ fil des livraisons.
   de tag) : `git fetch origin && git tag v0.3.0 origin/main && git push origin
   v0.3.0`. Le workflow `release.yml` construit alors le `.msi` et crée une
   release en brouillon, à publier sur GitHub (Releases → Edit → Publish).
-- Créer l'application Discord et donner son « Application ID ».
-
-## Demandé, dans cet ordre
-
-1. Discord Rich Presence (Windows) : il faut un « Application ID » créé par
-   l'utilisateur sur le portail développeur de Discord. IPC par le tube nommé
-   `\\.\pipe\discord-ipc-0`, sans crate.
+- Dans le portail Discord (application 1565740250511183997), Rich Presence →
+  Art Assets : ajouter `docs/discord-icon.png` sous le nom `logo`.
 
 ## Pistes pour plus tard
 

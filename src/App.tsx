@@ -14,6 +14,7 @@ import { Stage } from '@/components/Stage/Stage';
 import { ResizeHandles } from '@/components/ResizeHandles/ResizeHandles';
 import { PinButton } from '@/components/PinButton/PinButton';
 import { useAlwaysOnTop } from '@/hooks/useAlwaysOnTop';
+import { useDiscordPresence } from '@/hooks/useDiscordPresence';
 import '@/styles/globals.css';
 import './App.css';
 
@@ -41,6 +42,7 @@ export default function App() {
   } = usePlayerStore();
   const [scanError, setScanError] = useState<string | null>(null);
   const pin = useAlwaysOnTop();
+  useDiscordPresence();
 
   useEffect(() => { loadOrScan(); }, []);
 

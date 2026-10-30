@@ -31,6 +31,7 @@ Want to build it yourself instead? See [Getting Started](#getting-started).
 - 🎛️ Spectrum visualizer for tracks without a video: bars in the window, a ring in the sphere. It analyses a silent copy of the track, so the sound you hear never depends on it
 - ✨ While a track plays, the controls fade out when you're not using them, to show the video, the visualizer or the background image, sharp (Settings → Videos)
 - 🔵 Sphere mode — circular window with track list inside
+- 🎧 Optional Discord Rich Presence: what you're listening to, on your profile
 - 📌 Optional always-on-top pin, in the titlebar and the sphere — see [Always on Top](#always-on-top)
 - ⚡ Metadata cache: first scan is slow, subsequent launches load instantly; the next track is preloaded so it starts right away
 - 💾 Settings persisted between sessions

@@ -11,6 +11,7 @@ export function Settings({ onScan, isScanning }: Props) {
     hideControlsOverVideo, setHideControlsOverVideo,
     hideDuplicates, setHideDuplicates,
     startAtPreview, setStartAtPreview,
+    discordPresence, setDiscordPresence,
     showVisualizer, setShowVisualizer,
   } = usePlayerStore();
   const { themes, currentTheme, setTheme } = useTheme();
@@ -62,6 +63,21 @@ export function Settings({ onScan, isScanning }: Props) {
             <span>
               Start at the preview point
               <small>Like osu!'s song select: each track starts where its beatmap's preview begins.</small>
+            </span>
+          </label>
+        </section>
+
+        <section className="settings-section">
+          <h3>Discord</h3>
+          <label className="settings-toggle">
+            <input
+              type="checkbox"
+              checked={discordPresence}
+              onChange={(e) => setDiscordPresence(e.target.checked)}
+            />
+            <span>
+              Show what I'm listening to
+              <small>On your Discord profile: title, artist and time left. Needs the Discord app on the same computer (not available through WSL).</small>
             </span>
           </label>
         </section>

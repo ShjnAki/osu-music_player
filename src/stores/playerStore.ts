@@ -38,6 +38,8 @@ interface PlayerState {
   hideDuplicates: boolean;
   /** Démarre les pistes à leur point d'aperçu, comme le menu d'osu!. */
   startAtPreview: boolean;
+  /** Piste en cours affichée sur le profil Discord. */
+  discordPresence: boolean;
 
   setTracks: (tracks: Track[]) => void;
   setSearchQuery: (q: string) => void;
@@ -69,6 +71,7 @@ interface PlayerState {
   setAlwaysOnTop: (v: boolean) => void;
   setHideDuplicates: (v: boolean) => void;
   setStartAtPreview: (v: boolean) => void;
+  setDiscordPresence: (v: boolean) => void;
   nextTrack: () => void;
   prevTrack: () => void;
 }
@@ -174,6 +177,7 @@ export const usePlayerStore = create<PlayerState>()(
       alwaysOnTop: false,
       hideDuplicates: true,
       startAtPreview: false,
+      discordPresence: false,
 
       setTracks: (tracks) => set({ tracks }),
       setSearchQuery: (searchQuery) => set({ searchQuery }),
@@ -239,6 +243,7 @@ export const usePlayerStore = create<PlayerState>()(
       setAlwaysOnTop: (alwaysOnTop) => set({ alwaysOnTop }),
       setHideDuplicates: (hideDuplicates) => set({ hideDuplicates }),
       setStartAtPreview: (startAtPreview) => set({ startAtPreview }),
+      setDiscordPresence: (discordPresence) => set({ discordPresence }),
 
       nextTrack: () => {
         const state = get();
@@ -275,6 +280,7 @@ export const usePlayerStore = create<PlayerState>()(
         alwaysOnTop: s.alwaysOnTop,
         hideDuplicates: s.hideDuplicates,
         startAtPreview: s.startAtPreview,
+        discordPresence: s.discordPresence,
       }),
       merge: (persisted: any, current) => ({
         ...current,
