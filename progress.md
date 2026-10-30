@@ -41,14 +41,13 @@ fil des livraisons.
 - Import des collections osu! stable (`collection.db`) en playlists, bouton
   « Import osu! collections » de l'onglet Playlists ; réimporter met à jour
   les playlists du même nom.
+- Version 0.3.0 (CHANGELOG, README) ; tag `v0.3.0` poussé : le workflow
+  `release.yml` construit le `.msi` et crée une release en brouillon, que
+  l'utilisateur publie sur GitHub (Releases → Edit → Publish).
 
 ## Demandé, dans cet ordre
 
-1. Release Windows (`.msi`) : passer la version à 0.3.0 (`package.json`,
-   `tauri.conf.json`, `Cargo.toml`), compléter `CHANGELOG.md`, pousser un tag
-   `v0.3.0` ; le workflow `release.yml` crée une release en brouillon que
-   l'utilisateur publie sur GitHub.
-2. Discord Rich Presence (Windows) : il faut un « Application ID » créé par
+1. Discord Rich Presence (Windows) : il faut un « Application ID » créé par
    l'utilisateur sur le portail développeur de Discord. IPC par le tube nommé
    `\\.\pipe\discord-ipc-0`, sans crate.
 

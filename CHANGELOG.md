@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.3.0] - 2026-10-30
+
+### Added
+- **Beatmap videos**: muted and synced to the music (with the beatmap's offset), in the player bar, the sphere, and large in place of the library when it is hidden (☰). A "Video" filter shows only the tracks that have one.
+- **Spectrum visualizer** for tracks without a video: bars in the window, a ring in the sphere. It analyses a silent copy of the track, so the sound you hear never goes through Web Audio.
+- **Controls that fade out** while a track plays and the pointer is idle, in the sphere and the player bar, to show the video, the visualizer or the background image, which then drops its blur (Settings → Videos).
+- **Always-on-top pin** in the titlebar and the sphere, optional and remembered. Under WSL the app asks Windows through PowerShell; on Wayland, where an app can't pin itself, the button explains the desktop's window menu.
+- **Hide duplicates** (Settings, on by default): one copy of a song found in several beatmap sets (same title, artist and length).
+- **Start at the preview point** (Settings, off by default): tracks start where the beatmap's `PreviewTime` is, like osu!'s song select.
+- **Import osu! collections**: the Playlists tab turns osu! stable's `collection.db` into playlists; importing again updates them.
+- Remove a track from a playlist (×).
+- The next track is preloaded so it starts at once; Previous goes back to the start of the track first.
+- Resize edges and a visible grip for the frameless window.
+
+### Changed
+- Playback uses a native `<audio>` element instead of Howler, whose duration estimate ended tracks early on Linux.
+- On Linux, media is served by a local HTTP server: WebKitGTK cannot play `asset://` media and mis-plays some MP3s loaded as blobs.
+- Player controls are SVG icons in the theme's colors, readable in every theme (on Linux, emoji glyphs ignored the theme); times are brighter.
+- The sphere is sized in logical pixels (correct on high-DPI screens), can be dragged from any free spot, and no longer forces itself on top: the pin decides.
+- The track lists render only their visible rows, so the library opens quickly with thousands of tracks.
+
+### Fixed
+- Double-clicking the titlebar maximized the window, which closed the app under GNOME Wayland.
+- Songs folders on other drives (`S:\`) and in hidden Wine prefixes could be listed but not played.
+- Scanning froze the window; disk commands now run off the main thread.
+
 ## [0.2.0] - 2026-09-18
 
 ### Added
