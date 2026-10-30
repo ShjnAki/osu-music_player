@@ -186,7 +186,10 @@
 }
 .sphere-time {
   font-size: 10px;
-  color: var(--text-muted);
+  /* Comme les boutons : la couleur discrète du thème se perdait sur l'image
+     voilée, au point de disparaître dans le thème clair. */
+  color: color-mix(in srgb, var(--text-primary) 80%, transparent);
+  text-shadow: 0 1px 3px color-mix(in srgb, var(--bg-primary) 80%, transparent);
   font-variant-numeric: tabular-nums;
   width: 28px;
   text-align: center;

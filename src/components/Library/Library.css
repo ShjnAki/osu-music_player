@@ -72,7 +72,8 @@
 
 .track-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0; }
 .track-bpm { font-size: 10px; color: var(--accent); font-variant-numeric: tabular-nums; }
-.track-duration { font-size: 11px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+/* Couleur secondaire, pas discrète : à peine lisible dans Sakura. */
+.track-duration { font-size: 11px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
 
 /* Track action buttons (fav + playlist) */
 .track-actions { display: flex; gap: 2px; flex-shrink: 0; opacity: 0; transition: opacity 0.15s; }
