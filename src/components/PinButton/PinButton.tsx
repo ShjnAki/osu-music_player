@@ -31,11 +31,13 @@ export function PinButton({ pin, className, hintPlacement }: Props) {
     setHint(true);
   }, [pin.failures]);
 
+  // La raison d'un refus se lit et se recopie : le message reste jusqu'au clic.
+  const lasting = pin.support === 'wsl' && !!pin.failureReason;
   useEffect(() => {
-    if (!hint) return;
+    if (!hint || lasting) return;
     const timer = setTimeout(() => setHint(false), HINT_DURATION_MS);
     return () => clearTimeout(timer);
-  }, [hint]);
+  }, [hint, lasting]);
 
   const pinned = canPin && alwaysOnTop;
   const onClick = () => {
@@ -68,8 +70,14 @@ export function PinButton({ pin, className, hintPlacement }: Props) {
         >
           {pin.support === 'wsl' ? (
             <>
-              Windows didn't let the app pin its window from WSL. PowerToys can do it:
-              press <kbd>Win+Ctrl+T</kbd> with <b>Always On Top</b> enabled.
+              Windows didn't let the app pin its window from WSL. If PowerToys is
+              installed, its <b>Always On Top</b> (<kbd>Win+Ctrl+T</kbd>) may work instead.
+              {pin.failureReason && (
+                // Sélectionner la raison ne doit pas fermer le message.
+                <small className="pin-hint-reason" onClick={(e) => e.stopPropagation()}>
+                  {pin.failureReason}
+                </small>
+              )}
             </>
           ) : (
             <>

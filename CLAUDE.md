@@ -51,7 +51,7 @@ Commands registered in `lib.rs`:
 
 Commands that touch the disk are declared `#[tauri::command(async)]`: a synchronous command runs on the main thread, which also drives the window, and froze it during a scan.
 
-`wsl_pin.rs` detects WSL from the kernel release and builds the PowerShell script (C# 5, for Windows PowerShell 5.1), sent with `-EncodedCommand`. `osu_parse.rs` holds the pure `.osu` parsers (`parse_dominant_bpm`, `parse_background_filename`, `parse_video`). `media_server.rs` (Linux only) is a standard-library HTTP server with `Range` support: it listens on 127.0.0.1 on a random port, requires a random token in every URL and an exact `Host` header, and only serves files the asset protocol scope allows. It answers with `Access-Control-Allow-Origin: *` so that Web Audio can analyse the sound.
+`wsl_pin.rs` detects WSL from the kernel release and builds the PowerShell script (C# 5, for Windows PowerShell 5.1), sent with `-EncodedCommand`. The script answers `OK <n>` or `FAIL <reason>` (Windows error code, or the titles of the WSLg windows, owned by `msrdc`), and `PinButton` shows that reason until clicked. `osu_parse.rs` holds the pure `.osu` parsers (`parse_dominant_bpm`, `parse_background_filename`, `parse_video`). `media_server.rs` (Linux only) is a standard-library HTTP server with `Range` support: it listens on 127.0.0.1 on a random port, requires a random token in every URL and an exact `Host` header, and only serves files the asset protocol scope allows. It answers with `Access-Control-Allow-Origin: *` so that Web Audio can analyse the sound.
 
 ### Key constraints
 
