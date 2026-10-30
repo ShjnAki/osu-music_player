@@ -13,7 +13,7 @@ use std::io::{Read, Write};
 use std::path::PathBuf;
 use std::sync::mpsc::{channel, Sender};
 
-/// Application Discord « osu! Player » : son nom s'affiche sur le profil.
+/// Application Discord « Osu! Media Player » : son nom s'affiche sur le profil.
 pub const CLIENT_ID: &str = "1565740250511183997";
 
 const OP_HANDSHAKE: u32 = 0;
@@ -53,7 +53,7 @@ pub fn activity_payload(activity: Option<&Activity>, pid: u32, nonce: u64) -> Va
             "status_display_type": 2,
             "details": field(&a.title),
             "state": field(&state),
-            "assets": { "large_image": "logo", "large_text": "osu! Player" },
+            "assets": { "large_image": "logo", "large_text": "Osu! Media Player" },
         });
         if let (Some(start), Some(end), false) = (a.start_ms, a.end_ms, a.paused) {
             value["timestamps"] = json!({ "start": start, "end": end });

@@ -46,15 +46,14 @@ fil des livraisons.
 - Version 0.3.0 (CHANGELOG, README) publiée : `.msi`/`.exe` Windows,
   `.AppImage`/`.deb`/`.rpm` Linux. Les prochains tags publient leur release
   directement ; `publish-release.yml` publie un brouillon resté en plan.
-  Testé sous Windows par l'utilisateur : Discord et l'épingle fonctionnent.
+  Testé sous Windows par l'utilisateur (0.3.2) : Discord (titre dans le
+  statut compris), épingle, sphère sans carré.
 
 ## En attente de l'utilisateur
 
-- Pousser le tag `v0.3.2` (vidéo découpée en cercle dans la sphère sous
-  Windows, titre dans le statut Discord) : `git fetch origin && git tag v0.3.2
-  origin/main && git push origin v0.3.2`.
-- Dire quel nom donner à l'appli : l'application Discord s'appelle « Osu! Media
-  Player », la fenêtre « osu! Player », le produit installé `osu-player`.
+- Pousser le tag `v0.3.3` (nom « Osu! Media Player ») : `git fetch origin && git
+  tag v0.3.3 origin/main && git push origin v0.3.3`. Si Windows garde
+  « osu-player » à côté du nouveau, le désinstaller.
 
 ## Pistes pour plus tard
 

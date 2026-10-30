@@ -1,4 +1,4 @@
-# 🎵 osu! Player
+# 🎵 Osu! Media Player
 
 Un lecteur de musique de bureau léger et personnalisable pour ta collection de beatmaps osu!
 

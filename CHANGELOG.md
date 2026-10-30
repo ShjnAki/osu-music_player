@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.3] - 2026-10-30
+
+### Changed
+- The app is named **Osu! Media Player**, like its Discord application: window title, titlebar, tray tooltip, Discord card, release names, README. On Windows, the installed program takes that name too (the executable keeps its `osu-player` file name). Settings and cache are kept: the app identifier does not change. If Windows lists both "osu-player" and "Osu! Media Player" after updating, uninstall "osu-player".
+
 ## [0.3.2] - 2026-10-30
 
 ### Changed

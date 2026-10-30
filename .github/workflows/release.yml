@@ -49,7 +49,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: ${{ github.ref_name }}
-          releaseName: "osu! Player ${{ github.ref_name }}"
+          releaseName: "Osu! Media Player ${{ github.ref_name }}"
           releaseBody: "Voir CHANGELOG.md pour le détail des changements."
           # Publiée d'emblée : le lien « dernière version » du README ne voit pas
           # les brouillons.

@@ -135,7 +135,7 @@ export default function App() {
   return (
     <div className="app">
       <div className="titlebar" onMouseDown={startTitlebarDrag}>
-        <span className="titlebar-title">osu! player</span>
+        <span className="titlebar-title">Osu! Media Player</span>
         <div className="titlebar-actions">
           <PinButton pin={pin} className="titlebar-btn" hintPlacement="titlebar" />
           <button className="titlebar-btn" onClick={toggleSphereMode} title="Sphere mode">◎</button>

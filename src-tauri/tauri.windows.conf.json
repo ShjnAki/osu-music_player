@@ -1,4 +1,6 @@
 {
+  "productName": "Osu! Media Player",
+  "mainBinaryName": "osu-player",
   "app": {
     "security": {
       "assetProtocol": {
