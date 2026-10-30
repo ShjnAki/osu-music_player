@@ -2,6 +2,7 @@
 
 #[cfg(target_os = "linux")]
 mod media_server;
+mod osu_collections;
 mod osu_parse;
 mod wsl_pin;
 
@@ -544,6 +545,20 @@ fn set_wsl_topmost(app: tauri::AppHandle, enabled: bool) -> Result<(), String> {
     wsl_pin::set_topmost(&title, enabled)
 }
 
+/// Collections d'osu! traduites en pistes de la bibliothèque : lecture de
+/// collection.db et hachage des .osu, hors du fil principal.
+#[tauri::command(async)]
+fn import_osu_collections(
+    songs_folder: String,
+    tracks: Vec<osu_collections::LibraryTrack>,
+) -> Result<Vec<osu_collections::ImportedCollection>, String> {
+    let path = osu_collections::collection_db_path(Path::new(&songs_folder))
+        .ok_or("the Songs folder has no parent osu! folder")?;
+    let bytes = std::fs::read(&path).map_err(|_| format!("no collection.db at {}", path.display()))?;
+    let collections = osu_collections::parse_collection_db(&bytes)?;
+    Ok(osu_collections::import(&collections, &tracks))
+}
+
 /// Adresse du serveur média local, ou rien hors Linux, où asset:// suffit.
 struct MediaBaseUrl(Option<String>);
 
@@ -589,6 +604,7 @@ pub fn run() {
             media_base_url,
             always_on_top_support,
             set_wsl_topmost,
+            import_osu_collections,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -45,6 +45,7 @@ interface PlayerState {
   setVideoOnly: (v: boolean) => void;
   toggleFavorite: (id: string) => void;
   createPlaylist: (name: string) => void;
+  importPlaylists: (imported: { name: string; trackIds: string[] }[]) => void;
   deletePlaylist: (id: string) => void;
   addToPlaylist: (playlistId: string, trackId: string) => void;
   removeFromPlaylist: (playlistId: string, trackId: string) => void;
@@ -186,6 +187,17 @@ export const usePlayerStore = create<PlayerState>()(
       createPlaylist: (name) => set((s) => ({
         playlists: [...s.playlists, { id: crypto.randomUUID(), name, trackIds: [] }],
       })),
+      // Une playlist du même nom est remplacée, pas doublée : réimporter après
+      // avoir modifié ses collections dans osu! les remet à jour.
+      importPlaylists: (imported) => set((s) => {
+        const playlists = [...s.playlists];
+        for (const { name, trackIds } of imported) {
+          const i = playlists.findIndex(p => p.name === name);
+          if (i >= 0) playlists[i] = { ...playlists[i], trackIds };
+          else playlists.push({ id: crypto.randomUUID(), name, trackIds });
+        }
+        return { playlists };
+      }),
       deletePlaylist: (id) => set((s) => ({
         playlists: s.playlists.filter(p => p.id !== id),
         activePlaylistId: s.activePlaylistId === id ? null : s.activePlaylistId,

@@ -38,19 +38,17 @@ fil des livraisons.
 - Doublons masqués (option « Hide duplicates », activée par défaut).
 - Démarrage au point d'aperçu (option « Start at the preview point »,
   désactivée par défaut ; `CACHE_VERSION` passé à 5, d'où un rescan).
+- Import des collections osu! stable (`collection.db`) en playlists, bouton
+  « Import osu! collections » de l'onglet Playlists ; réimporter met à jour
+  les playlists du même nom.
 
 ## Demandé, dans cet ordre
 
-1. Importer les collections osu! (`collection.db`, à côté du dossier Songs)
-   comme playlists. Les collections désignent les difficultés par le MD5 du
-   fichier `.osu` : hacher les `.osu` des dossiers de pistes au moment de
-   l'import (pas de crate md5 dans l'arbre : en écrire une petite, testée).
-   osu!lazer (`client.realm`) n'est pas pris en charge.
-2. Release Windows (`.msi`) : passer la version à 0.3.0 (`package.json`,
+1. Release Windows (`.msi`) : passer la version à 0.3.0 (`package.json`,
    `tauri.conf.json`, `Cargo.toml`), compléter `CHANGELOG.md`, pousser un tag
    `v0.3.0` ; le workflow `release.yml` crée une release en brouillon que
    l'utilisateur publie sur GitHub.
-3. Discord Rich Presence (Windows) : il faut un « Application ID » créé par
+2. Discord Rich Presence (Windows) : il faut un « Application ID » créé par
    l'utilisateur sur le portail développeur de Discord. IPC par le tube nommé
    `\\.\pipe\discord-ipc-0`, sans crate.
 
