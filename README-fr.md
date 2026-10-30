@@ -21,6 +21,7 @@ Tu préfères compiler toi-même ? Voir [Démarrage rapide](#démarrage-rapide).
 - 🔊 Contrôle du volume
 - 🏷️ Lecture des tags ID3 (titre, artiste, BPM)
 - 🖼️ Pochette d'album depuis le dossier de la beatmap
+- 🎬 Vidéos des beatmaps, muettes et calées sur la musique
 - 💾 Paramètres sauvegardés entre les sessions
 - 🪟 Fenêtre sans bordure, déplaçable
 
@@ -61,9 +62,11 @@ osu-player/
 │   ├── components/
 │   │   ├── Player/           # PlayerBar (contrôles, progression)
 │   │   ├── Library/          # Liste des pistes + recherche
-│   │   └── Settings/         # Thèmes, sélecteur de dossier
+│   │   ├── Settings/         # Thèmes, sélecteur de dossier
+│   │   ├── SphereView/       # Mode sphère
+│   │   └── BeatmapVideo/     # Vidéo de la beatmap, muette, calée sur la musique
 │   ├── hooks/
-│   │   ├── useAudio.ts       # Moteur de lecture Howler.js
+│   │   ├── useAudio.ts       # Moteur de lecture (<audio> natif, préchargement de la suivante)
 │   │   └── useTheme.ts       # Thèmes via variables CSS
 │   ├── stores/
 │   │   └── playerStore.ts    # État global Zustand
@@ -71,7 +74,9 @@ osu-player/
 │   └── styles/globals.css
 ├── src-tauri/                # Backend Rust
 │   └── src/
-│       └── lib.rs            # scan_osu_songs, parse_osu_bpm, read_audio_file
+│       ├── lib.rs            # Commandes Tauri : scan, cache, mode sphère, serveur média
+│       ├── osu_parse.rs      # Lecture des .osu : BPM, fond, vidéo
+│       └── media_server.rs   # Serveur HTTP local des médias (Linux)
 ├── themes/                   # Fichiers de thèmes JSON
 │   ├── default.json
 │   ├── glass.json
