@@ -36,7 +36,7 @@ export function SphereView({ onToggle, onSeek }: Props) {
   const {
     tracks, searchQuery, videoOnly, currentTrack, status, progress,
     isShuffled, repeatMode, setCurrentTrack, nextTrack, prevTrack,
-    cycleRepeat, toggleShuffle, hideSphereControlsOverVideo,
+    cycleRepeat, toggleShuffle, hideControlsOverVideo,
   } = usePlayerStore();
 
   const filtered = useMemo(() => {
@@ -57,7 +57,7 @@ export function SphereView({ onToggle, onSeek }: Props) {
   const bgUrl = bgRaw ? convertFileSrc(bgRaw) : null;
 
   const { videoTrack, markUnavailable } = useVideoTrack(currentTrack);
-  const videoFocus = !!videoTrack && hideSphereControlsOverVideo;
+  const videoFocus = !!videoTrack && hideControlsOverVideo;
   // En pause, les contrôles restent : c'est pour s'en servir qu'on s'arrête.
   const { hidden: controlsHidden, handlers: autoHide } = useAutoHide(videoFocus && status === 'playing');
 

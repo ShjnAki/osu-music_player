@@ -25,7 +25,7 @@ Want to build it yourself instead? See [Getting Started](#getting-started).
 - 🔊 Volume control
 - 🏷️ ID3 tag reading (title, artist) with folder-name fallback
 - 🖼️ Album art and beatmap background images
-- 🎬 Beatmap videos, muted and synced to the music, shown large when you hide the library (☰)
+- 🎬 Beatmap videos, muted and synced to the music, shown large when you hide the library (☰); the controls over them fade out while you're not using them
 - 🔵 Sphere mode — circular always-on-top window with track list inside
 - ⚡ Metadata cache: first scan is slow, subsequent launches load instantly
 - 💾 Settings persisted between sessions

@@ -56,6 +56,29 @@
   text-shadow: 0 1px 4px color-mix(in srgb, var(--shade) 80%, transparent);
 }
 
+/* Même effacement que dans la sphère (voir useAutoHide) : sans activité, les
+   contrôles disparaissent et le voile s'allège pour laisser voir la vidéo. */
+.player-bar.has-video > .player-cover,
+.player-bar.has-video > .player-info,
+.player-bar.has-video > .player-progress,
+.player-bar.has-video > .player-controls,
+.player-bar.has-video > .player-extras,
+.player-bar.has-video > .player-bg-overlay {
+  transition: opacity 0.4s ease;
+}
+.player-bar.controls-hidden > .player-cover,
+.player-bar.controls-hidden > .player-info,
+.player-bar.controls-hidden > .player-progress,
+.player-bar.controls-hidden > .player-controls,
+.player-bar.controls-hidden > .player-extras {
+  opacity: 0;
+  /* Invisibles, ils ne doivent pas capter le clic qui réveille l'affichage. */
+  pointer-events: none;
+}
+.player-bar.controls-hidden > .player-bg-overlay {
+  opacity: 0.15;
+}
+
 /* Tout le contenu passe au-dessus du bg */
 .player-bar > *:not(.player-bg):not(.player-bg-overlay):not(.player-video) {
   position: relative;

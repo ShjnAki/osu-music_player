@@ -1,6 +1,7 @@
 import { usePlayerStore } from '@/stores/playerStore';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { BeatmapVideo, useVideoTrack } from '@/components/BeatmapVideo/BeatmapVideo';
+import { useAutoHide } from '@/hooks/useAutoHide';
 import './PlayerBar.css';
 
 interface Props {
@@ -15,7 +16,7 @@ export function PlayerBar({ onToggle, onSeek, showVideo }: Props) {
     currentTrack, status, progress, volume, isMuted,
     isShuffled, repeatMode, setVolume, toggleMute,
     toggleShuffle, cycleRepeat, nextTrack, prevTrack,
-    showSettings, setShowSettings, showLibrary, setShowLibrary
+    showSettings, setShowSettings, showLibrary, setShowLibrary, hideControlsOverVideo,
   } = usePlayerStore();
 
   const isPlaying = status === 'playing';
@@ -32,9 +33,15 @@ export function PlayerBar({ onToggle, onSeek, showVideo }: Props) {
 
   const { videoTrack: playableVideo, markUnavailable } = useVideoTrack(currentTrack);
   const videoTrack = showVideo ? playableVideo : null;
+  // En pause, les contrôles restent : c'est pour s'en servir qu'on s'arrête.
+  const { hidden: controlsHidden, handlers: autoHide } =
+    useAutoHide(!!videoTrack && hideControlsOverVideo && status === 'playing');
 
   return (
-    <div className={`player-bar fade-in ${videoTrack ? 'has-video' : ''}`}>
+    <div
+      className={`player-bar fade-in ${videoTrack ? 'has-video' : ''} ${controlsHidden ? 'controls-hidden' : ''}`}
+      {...autoHide}
+    >
       {videoTrack ? (
         <BeatmapVideo
           key={videoTrack.id}

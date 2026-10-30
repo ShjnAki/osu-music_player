@@ -8,7 +8,7 @@ interface Props { onScan: () => void; isScanning: boolean; }
 export function Settings({ onScan, isScanning }: Props) {
   const {
     songsFolder, setSongsFolder, setShowSettings,
-    hideSphereControlsOverVideo, setHideSphereControlsOverVideo,
+    hideControlsOverVideo, setHideControlsOverVideo,
   } = usePlayerStore();
   const { themes, currentTheme, setTheme } = useTheme();
 
@@ -46,12 +46,12 @@ export function Settings({ onScan, isScanning }: Props) {
           <label className="settings-toggle">
             <input
               type="checkbox"
-              checked={hideSphereControlsOverVideo}
-              onChange={(e) => setHideSphereControlsOverVideo(e.target.checked)}
+              checked={hideControlsOverVideo}
+              onChange={(e) => setHideControlsOverVideo(e.target.checked)}
             />
             <span>
-              Hide sphere controls over videos
-              <small>They fade out after a moment without moving the pointer, and come back as soon as it moves.</small>
+              Hide controls over videos
+              <small>In the sphere and the player bar, they fade out after a moment without moving the pointer, and come back as soon as it moves.</small>
             </span>
           </label>
         </section>

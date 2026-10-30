@@ -27,8 +27,8 @@ interface PlayerState {
   showLibrary: boolean;
   showSettings: boolean;
   isSphereMode: boolean;
-  /** En mode sphère, efface liste et contrôles quand le pointeur s'en va, pour laisser voir la vidéo. */
-  hideSphereControlsOverVideo: boolean;
+  /** Efface les contrôles posés sur une vidéo quand on ne s'en sert pas, pour la laisser voir. */
+  hideControlsOverVideo: boolean;
 
   setTracks: (tracks: Track[]) => void;
   setSearchQuery: (q: string) => void;
@@ -55,7 +55,7 @@ interface PlayerState {
   setShowLibrary: (v: boolean) => void;
   setShowSettings: (v: boolean) => void;
   toggleSphereMode: () => void;
-  setHideSphereControlsOverVideo: (v: boolean) => void;
+  setHideControlsOverVideo: (v: boolean) => void;
   nextTrack: () => void;
   prevTrack: () => void;
 }
@@ -110,7 +110,7 @@ export const usePlayerStore = create<PlayerState>()(
       currentTrack: null, status: 'idle', progress: 0, audioTime: 0,
       volume: 0.8, isMuted: false, isShuffled: false, repeatMode: 'none',
       currentTheme: null, showLibrary: true, showSettings: false, isSphereMode: false,
-      hideSphereControlsOverVideo: true,
+      hideControlsOverVideo: true,
 
       setTracks: (tracks) => set({ tracks }),
       setSearchQuery: (searchQuery) => set({ searchQuery }),
@@ -161,7 +161,7 @@ export const usePlayerStore = create<PlayerState>()(
       setShowLibrary: (showLibrary) => set({ showLibrary }),
       setShowSettings: (showSettings) => set({ showSettings }),
       toggleSphereMode: () => set((s) => ({ isSphereMode: !s.isSphereMode })),
-      setHideSphereControlsOverVideo: (hideSphereControlsOverVideo) => set({ hideSphereControlsOverVideo }),
+      setHideControlsOverVideo: (hideControlsOverVideo) => set({ hideControlsOverVideo }),
 
       nextTrack: () => {
         const state = get();
@@ -193,7 +193,7 @@ export const usePlayerStore = create<PlayerState>()(
         currentTheme: s.currentTheme,
         favoriteIds: Array.from(s.favoriteIds),
         playlists: s.playlists,
-        hideSphereControlsOverVideo: s.hideSphereControlsOverVideo,
+        hideControlsOverVideo: s.hideControlsOverVideo,
       }),
       merge: (persisted: any, current) => ({
         ...current,
