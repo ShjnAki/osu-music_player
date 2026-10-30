@@ -172,13 +172,13 @@ export const usePlayerStore = create<PlayerState>()(
         if (next) set({ currentTrack: next, progress: 0, audioTime: 0, status: 'loading' });
       },
 
+      // Revenir au début du morceau en cours relève de useAudio, qui tient
+      // l'élément audio : ici, seulement changer de piste.
       prevTrack: () => {
         const state = get();
-        const { currentTrack, progress } = state;
         const visible = visibleTracks(state);
         if (!visible.length) return;
-        if (progress > 0.05) { set({ progress: 0, audioTime: 0, status: 'loading' }); return; }
-        const idx = visible.findIndex((t) => t.id === currentTrack?.id);
+        const idx = visible.findIndex((t) => t.id === state.currentTrack?.id);
         const prevIdx = idx > 0 ? idx - 1 : visible.length - 1;
         set({ currentTrack: visible[prevIdx], progress: 0, audioTime: 0, status: 'loading' });
       },

@@ -30,12 +30,13 @@ function startWindowDrag(e: MouseEvent) {
 interface Props {
   onToggle: () => void;
   onSeek: (ratio: number) => void;
+  onPrevious: () => void;
 }
 
-export function SphereView({ onToggle, onSeek }: Props) {
+export function SphereView({ onToggle, onSeek, onPrevious }: Props) {
   const {
     tracks, searchQuery, videoOnly, currentTrack, status, progress,
-    isShuffled, repeatMode, setCurrentTrack, nextTrack, prevTrack,
+    isShuffled, repeatMode, setCurrentTrack, nextTrack,
     cycleRepeat, toggleShuffle, hideControlsOverVideo,
   } = usePlayerStore();
 
@@ -130,7 +131,7 @@ export function SphereView({ onToggle, onSeek }: Props) {
       {/* Controls */}
       <div className="sphere-controls">
         <button className={`sphere-btn sm ${isShuffled ? 'active' : ''}`} onClick={toggleShuffle}>⇄</button>
-        <button className="sphere-btn" onClick={prevTrack}>⏮</button>
+        <button className="sphere-btn" onClick={onPrevious}>⏮</button>
         <button className="sphere-btn play" onClick={onToggle}>
           {status === 'loading'
             ? <span style={{ animation: 'spin 1s linear infinite', display: 'inline-block' }}>◌</span>

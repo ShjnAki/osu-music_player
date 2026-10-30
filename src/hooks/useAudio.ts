@@ -6,6 +6,11 @@ import { localMediaUrl } from '@/lib/localMedia';
 // que les deux lectures disque ne se concurrencent pas.
 const PRELOAD_DELAY_MS = 1000;
 
+// Passé ce point du morceau, « précédent » revient à son début au lieu de
+// changer de piste, comme sur la plupart des lecteurs ; c'est le seuil que
+// l'appli appliquait déjà.
+const RESTART_AFTER_RATIO = 0.05;
+
 // Un <audio> natif plutôt que Howler : en mode html5, Howler fige la durée au
 // premier « prêt » et programme la fin de piste par minuterie. Si la webview
 // annonce d'abord une durée nulle, comme WebKitGTK pour un blob, Howler
@@ -68,7 +73,7 @@ export function useAudio() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const releaseRef = useRef<(() => void) | null>(null);
   const progressRef = useRef<number>(0);
-  const { currentTrack, volume, isMuted, setStatus, setPlayback, nextTrack } = usePlayerStore();
+  const { currentTrack, volume, isMuted, setStatus, setPlayback, nextTrack, prevTrack } = usePlayerStore();
 
   const cleanup = useCallback(() => {
     releaseRef.current?.();
@@ -148,11 +153,20 @@ export function useAudio() {
     audio.currentTime = ratio * audio.duration;
     setPlayback(ratio, ratio * audio.duration);
   }, []);
+  const previous = useCallback(() => {
+    const audio = audioRef.current;
+    if (audio && audio.duration > 0 && audio.currentTime > audio.duration * RESTART_AFTER_RATIO) {
+      audio.currentTime = 0;
+      setPlayback(0, 0);
+      return;
+    }
+    prevTrack();
+  }, []);
   const toggle = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
     if (audio.paused) play(); else pause();
   }, [play, pause]);
 
-  return { play, pause, toggle, seek };
+  return { play, pause, toggle, seek, previous };
 }

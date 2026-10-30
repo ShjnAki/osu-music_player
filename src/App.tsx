@@ -16,7 +16,7 @@ import './App.css';
 
 export default function App() {
   useTheme();
-  const { toggle, seek } = useAudio();
+  const { toggle, seek, previous } = useAudio();
   const {
     songsFolder, setSongsFolder, setTracks, setIsScanning, isScanning,
     showSettings, setShowSettings, showLibrary, isSphereMode, toggleSphereMode,
@@ -99,7 +99,7 @@ export default function App() {
   if (isSphereMode) {
     return (
       <div className="app sphere-mode">
-        <SphereView onToggle={toggle} onSeek={seek} />
+        <SphereView onToggle={toggle} onSeek={seek} onPrevious={previous} />
         <button
           className="sphere-exit-btn"
           onClick={toggleSphereMode}
@@ -131,7 +131,7 @@ export default function App() {
         ) : (
           <>
             {showLibrary ? <Library /> : <Stage />}
-            <PlayerBar onToggle={toggle} onSeek={seek} showVideo={showLibrary} />
+            <PlayerBar onToggle={toggle} onSeek={seek} onPrevious={previous} showVideo={showLibrary} />
           </>
         )}
       </div>

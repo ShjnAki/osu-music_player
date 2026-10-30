@@ -7,15 +7,16 @@ import './PlayerBar.css';
 interface Props {
   onToggle: () => void;
   onSeek: (ratio: number) => void;
+  onPrevious: () => void;
   /** Faux quand la vidéo passe déjà en grand au-dessus : la décoder deux fois coûterait pour rien. */
   showVideo: boolean;
 }
 
-export function PlayerBar({ onToggle, onSeek, showVideo }: Props) {
+export function PlayerBar({ onToggle, onSeek, onPrevious, showVideo }: Props) {
   const {
     currentTrack, status, progress, volume, isMuted,
     isShuffled, repeatMode, setVolume, toggleMute,
-    toggleShuffle, cycleRepeat, nextTrack, prevTrack,
+    toggleShuffle, cycleRepeat, nextTrack,
     showSettings, setShowSettings, showLibrary, setShowLibrary, hideControlsOverVideo,
   } = usePlayerStore();
 
@@ -100,7 +101,7 @@ export function PlayerBar({ onToggle, onSeek, showVideo }: Props) {
       {/* Controls */}
       <div className="player-controls">
         <button className={`ctrl-btn ${isShuffled ? 'active' : ''}`} onClick={toggleShuffle} title="Shuffle">⇄</button>
-        <button className="ctrl-btn" onClick={prevTrack} title="Previous">⏮</button>
+        <button className="ctrl-btn" onClick={onPrevious} title="Previous">⏮</button>
         <button className={`ctrl-btn play-btn`} onClick={onToggle}>
           {status === 'loading'
             ? <span style={{ animation: 'spin 1s linear infinite', display: 'inline-block' }}>◌</span>
