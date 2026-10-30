@@ -4,6 +4,7 @@ import { convertFileSrc } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
 import { useAutoHide } from '@/hooks/useAutoHide';
+import { Visualizer } from '@/components/Visualizer/Visualizer';
 import { BeatmapVideo, useVideoTrack } from '@/components/BeatmapVideo/BeatmapVideo';
 import type { Track } from '@/types';
 import './SphereView.css';
@@ -38,7 +39,7 @@ export function SphereView({ onToggle, onSeek, onPrevious }: Props) {
   const {
     tracks, searchQuery, videoOnly, currentTrack, status, progress,
     isShuffled, repeatMode, setCurrentTrack, nextTrack,
-    cycleRepeat, toggleShuffle, hideControlsOverVideo,
+    cycleRepeat, toggleShuffle, hideControlsOverVideo, showVisualizer,
   } = store;
 
   // La vue de la bibliothèque (onglet, recherche, filtres) : « suivant » ne
@@ -56,9 +57,10 @@ export function SphereView({ onToggle, onSeek, onPrevious }: Props) {
   const bgUrl = bgRaw ? convertFileSrc(bgRaw) : null;
 
   const { videoTrack, markUnavailable } = useVideoTrack(currentTrack);
-  const videoFocus = !!videoTrack && hideControlsOverVideo;
+  const visualizer = showVisualizer && !!currentTrack && !currentTrack.videoPath;
+  const visualFocus = (!!videoTrack || visualizer) && hideControlsOverVideo;
   // En pause, les contrôles restent : c'est pour s'en servir qu'on s'arrête.
-  const { hidden: controlsHidden, handlers: autoHide } = useAutoHide(videoFocus && status === 'playing');
+  const { hidden: controlsHidden, handlers: autoHide } = useAutoHide(visualFocus && status === 'playing');
 
   const formatTime = (secs?: number) => {
     if (!secs) return '0:00';
@@ -69,7 +71,7 @@ export function SphereView({ onToggle, onSeek, onPrevious }: Props) {
 
   return (
     <div
-      className={`sphere-view ${videoTrack ? 'has-video' : ''} ${videoFocus ? 'video-focus' : ''} ${controlsHidden ? 'controls-hidden' : ''}`}
+      className={`sphere-view ${videoTrack ? 'has-video' : ''} ${visualFocus ? 'visual-focus' : ''} ${controlsHidden ? 'controls-hidden' : ''}`}
       {...autoHide}
       onMouseDown={(e) => { autoHide.onMouseDown?.(); startWindowDrag(e); }}
     >
@@ -84,6 +86,7 @@ export function SphereView({ onToggle, onSeek, onPrevious }: Props) {
         <div className="sphere-bg" style={{ backgroundImage: `url("${bgUrl}")` }} />
       )}
       <div className="sphere-bg-overlay" />
+      {visualizer && <Visualizer variant="ring" className="sphere-visualizer" />}
 
       {/* Track list */}
       <div className="sphere-list" ref={containerRef}>

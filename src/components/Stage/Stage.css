@@ -27,3 +27,9 @@
   background-position: center;
   animation: bgFadeIn 0.5s ease;
 }
+
+/* Assombrie sous le visualiseur : des barres claires sur une image claire ne
+   se verraient pas. Un filtre sur une image fixe ne coûte qu'une fois. */
+.stage.has-visualizer .stage-image {
+  filter: brightness(0.5);
+}

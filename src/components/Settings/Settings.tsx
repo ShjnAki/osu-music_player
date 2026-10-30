@@ -9,6 +9,7 @@ export function Settings({ onScan, isScanning }: Props) {
   const {
     songsFolder, setSongsFolder, setShowSettings,
     hideControlsOverVideo, setHideControlsOverVideo,
+    showVisualizer, setShowVisualizer,
   } = usePlayerStore();
   const { themes, currentTheme, setTheme } = useTheme();
 
@@ -50,8 +51,19 @@ export function Settings({ onScan, isScanning }: Props) {
               onChange={(e) => setHideControlsOverVideo(e.target.checked)}
             />
             <span>
-              Hide controls over videos
+              Hide controls over videos and the visualizer
               <small>In the sphere and the player bar, they fade out after a moment without moving the pointer, and come back as soon as it moves.</small>
+            </span>
+          </label>
+          <label className="settings-toggle">
+            <input
+              type="checkbox"
+              checked={showVisualizer}
+              onChange={(e) => setShowVisualizer(e.target.checked)}
+            />
+            <span>
+              Visualizer for tracks without a video
+              <small>The sound goes through Web Audio to be analysed. Turn this off if playback misbehaves.</small>
             </span>
           </label>
         </section>

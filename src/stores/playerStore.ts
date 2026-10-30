@@ -31,6 +31,8 @@ interface PlayerState {
   isSphereMode: boolean;
   /** Efface les contrôles posés sur une vidéo quand on ne s'en sert pas, pour la laisser voir. */
   hideControlsOverVideo: boolean;
+  /** Visualiseur pour les pistes sans vidéo ; il fait passer leur son par Web Audio. */
+  showVisualizer: boolean;
 
   setTracks: (tracks: Track[]) => void;
   setSearchQuery: (q: string) => void;
@@ -59,6 +61,7 @@ interface PlayerState {
   setShowSettings: (v: boolean) => void;
   toggleSphereMode: () => void;
   setHideControlsOverVideo: (v: boolean) => void;
+  setShowVisualizer: (v: boolean) => void;
   nextTrack: () => void;
   prevTrack: () => void;
 }
@@ -125,6 +128,7 @@ export const usePlayerStore = create<PlayerState>()(
       volume: 0.8, isMuted: false, isShuffled: false, repeatMode: 'none',
       currentTheme: null, showLibrary: true, showSettings: false, isSphereMode: false,
       hideControlsOverVideo: true,
+      showVisualizer: true,
 
       setTracks: (tracks) => set({ tracks }),
       setSearchQuery: (searchQuery) => set({ searchQuery }),
@@ -177,6 +181,7 @@ export const usePlayerStore = create<PlayerState>()(
       setShowSettings: (showSettings) => set({ showSettings }),
       toggleSphereMode: () => set((s) => ({ isSphereMode: !s.isSphereMode })),
       setHideControlsOverVideo: (hideControlsOverVideo) => set({ hideControlsOverVideo }),
+      setShowVisualizer: (showVisualizer) => set({ showVisualizer }),
 
       nextTrack: () => {
         const state = get();
@@ -209,6 +214,7 @@ export const usePlayerStore = create<PlayerState>()(
         favoriteIds: Array.from(s.favoriteIds),
         playlists: s.playlists,
         hideControlsOverVideo: s.hideControlsOverVideo,
+        showVisualizer: s.showVisualizer,
       }),
       merge: (persisted: any, current) => ({
         ...current,

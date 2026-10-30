@@ -1,6 +1,8 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { usePlayerStore, predictNextTrack } from '@/stores/playerStore';
 import { localMediaUrl } from '@/lib/localMedia';
+import { primeAudioAnalysis, routeThroughAnalyser, setPlaybackVolume } from '@/lib/audioAnalysis';
+import type { Track } from '@/types';
 
 // Laisse la piste courante finir de démarrer avant d'ouvrir la suivante, pour
 // que les deux lectures disque ne se concurrencent pas.
@@ -21,10 +23,15 @@ interface OpenTrack {
   release: () => void;
 }
 
-async function openTrack(path: string): Promise<OpenTrack> {
+/** Le visualiseur remplace la vidéo : seules les pistes qui n'en ont pas sont analysées. */
+const wantsAnalysis = (track: Track) => usePlayerStore.getState().showVisualizer && !track.videoPath;
+
+async function openTrack(track: Track): Promise<OpenTrack> {
   const audio = new Audio();
   audio.preload = 'auto';
-  audio.src = await localMediaUrl(path);
+  // Avant src : une source chargée sans CORS ne livre à Web Audio que du silence.
+  if (wantsAnalysis(track)) audio.crossOrigin = 'anonymous';
+  audio.src = await localMediaUrl(track.path);
   return {
     audio,
     release: () => {
@@ -50,7 +57,7 @@ function preloadNextTrack() {
   const next = predictNextTrack(usePlayerStore.getState());
   if (!next || preloaded?.trackId === next.id) return;
   preloaded?.track.then((t) => t.release(), () => {});
-  const entry = { trackId: next.id, track: openTrack(next.path) };
+  const entry = { trackId: next.id, track: openTrack(next) };
   preloaded = entry;
   // Une piste illisible ne doit pas être adoptée : elle resterait muette. Si
   // elle l'est déjà, c'est l'effet de lecture qui gère l'erreur.
@@ -74,6 +81,18 @@ export function useAudio() {
   const releaseRef = useRef<(() => void) | null>(null);
   const progressRef = useRef<number>(0);
   const { currentTrack, volume, isMuted, setStatus, setPlayback, nextTrack, prevTrack } = usePlayerStore();
+
+  // Le contexte audio doit naître d'un geste de l'utilisateur pour démarrer :
+  // le clic qui lance une piste suffit.
+  useEffect(() => {
+    const prime = () => { if (usePlayerStore.getState().showVisualizer) primeAudioAnalysis(); };
+    document.addEventListener('pointerdown', prime, true);
+    document.addEventListener('keydown', prime, true);
+    return () => {
+      document.removeEventListener('pointerdown', prime, true);
+      document.removeEventListener('keydown', prime, true);
+    };
+  }, []);
 
   const cleanup = useCallback(() => {
     releaseRef.current?.();
@@ -101,6 +120,16 @@ export function useAudio() {
       const { audio } = track;
       audioRef.current = audio;
       releaseRef.current = track.release;
+
+      // Seulement un élément chargé en CORS : préchargé avant un changement de
+      // l'option, il ne l'est peut-être pas, et l'analyser le rendrait muet.
+      if (wantsAnalysis(currentTrack) && audio.crossOrigin === 'anonymous') {
+        routeThroughAnalyser(audio).then((unroute) => {
+          if (!unroute) return;
+          if (cancelled) { unroute(); return; }
+          releaseRef.current = () => { unroute(); track.release(); };
+        });
+      }
 
       const { isMuted: muted, volume: vol } = usePlayerStore.getState();
       audio.volume = muted ? 0 : vol;
@@ -139,7 +168,7 @@ export function useAudio() {
       }, 500);
     };
 
-    (takePreloaded(currentTrack.id) ?? openTrack(currentTrack.path)).then(
+    (takePreloaded(currentTrack.id) ?? openTrack(currentTrack)).then(
       adopt,
       () => { if (!cancelled) setStatus('error'); },
     );
@@ -149,7 +178,7 @@ export function useAudio() {
 
   useEffect(() => {
     if (!audioRef.current) return;
-    audioRef.current.volume = isMuted ? 0 : volume;
+    setPlaybackVolume(audioRef.current, isMuted ? 0 : volume);
   }, [volume, isMuted]);
 
   const play = useCallback(() => { audioRef.current?.play().catch(() => {}); }, []);

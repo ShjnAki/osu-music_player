@@ -147,7 +147,7 @@ export default function App() {
         ) : (
           <>
             {showLibrary ? <Library /> : <Stage />}
-            <PlayerBar onToggle={toggle} onSeek={seek} onPrevious={previous} showVideo={showLibrary} />
+            <PlayerBar onToggle={toggle} onSeek={seek} onPrevious={previous} showVisual={showLibrary} />
           </>
         )}
       </div>

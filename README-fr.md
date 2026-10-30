@@ -22,6 +22,7 @@ Tu préfères compiler toi-même ? Voir [Démarrage rapide](#démarrage-rapide).
 - 🏷️ Lecture des tags ID3 (titre, artiste, BPM)
 - 🖼️ Pochette d'album depuis le dossier de la beatmap
 - 🎬 Vidéos des beatmaps, muettes et calées sur la musique, en grand quand la liste est masquée (☰) ; les contrôles posés dessus s'effacent quand on ne s'en sert pas
+- 🎛️ Visualiseur du spectre pour les pistes sans vidéo : des barres dans la fenêtre, un anneau dans la sphère
 - 💾 Paramètres sauvegardés entre les sessions
 - 🪟 Fenêtre sans bordure, déplaçable
 

@@ -281,11 +281,12 @@
 /* Option « masquer les contrôles sur la vidéo » : sans activité (voir
    useAutoHide), liste, titre et contrôles s'effacent et le voile s'allège pour
    laisser voir la vidéo ; ils reviennent au moindre mouvement. */
-.sphere-view.video-focus > .sphere-list,
-.sphere-view.video-focus > .sphere-now-playing,
-.sphere-view.video-focus > .sphere-progress,
-.sphere-view.video-focus > .sphere-controls,
-.sphere-view.video-focus > .sphere-bg-overlay {
+.sphere-view.visual-focus > .sphere-list,
+.sphere-view.visual-focus > .sphere-now-playing,
+.sphere-view.visual-focus > .sphere-progress,
+.sphere-view.visual-focus > .sphere-controls,
+.sphere-view.visual-focus > .sphere-bg-overlay,
+.sphere-view.visual-focus > .sphere-visualizer {
   transition: opacity 0.4s ease;
 }
 .sphere-view.controls-hidden > .sphere-list,
@@ -299,4 +300,17 @@
 }
 .sphere-view.controls-hidden > .sphere-bg-overlay {
   opacity: 0.15;
+}
+
+/* Anneau du visualiseur, pour les pistes sans vidéo. Positionné ici et non
+   par sa propre feuille : la règle :where() plus haut le remettrait dans le
+   flux. En retrait derrière la liste, en entier quand elle s'efface. */
+.sphere-visualizer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0.6;
+}
+.sphere-view.controls-hidden > .sphere-visualizer {
+  opacity: 1;
 }

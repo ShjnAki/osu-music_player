@@ -2,22 +2,23 @@ import { usePlayerStore } from '@/stores/playerStore';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { BeatmapVideo, useVideoTrack } from '@/components/BeatmapVideo/BeatmapVideo';
 import { useAutoHide } from '@/hooks/useAutoHide';
+import { Visualizer } from '@/components/Visualizer/Visualizer';
 import './PlayerBar.css';
 
 interface Props {
   onToggle: () => void;
   onSeek: (ratio: number) => void;
   onPrevious: () => void;
-  /** Faux quand la vidéo passe déjà en grand au-dessus : la décoder deux fois coûterait pour rien. */
-  showVideo: boolean;
+  /** Faux quand la vidéo ou le visualiseur passe déjà en grand au-dessus : les montrer deux fois coûterait pour rien. */
+  showVisual: boolean;
 }
 
-export function PlayerBar({ onToggle, onSeek, onPrevious, showVideo }: Props) {
+export function PlayerBar({ onToggle, onSeek, onPrevious, showVisual }: Props) {
   const {
     currentTrack, status, progress, volume, isMuted,
     isShuffled, repeatMode, setVolume, toggleMute,
     toggleShuffle, cycleRepeat, nextTrack,
-    showSettings, setShowSettings, showLibrary, setShowLibrary, hideControlsOverVideo,
+    showSettings, setShowSettings, showLibrary, setShowLibrary, hideControlsOverVideo, showVisualizer,
   } = usePlayerStore();
 
   const isPlaying = status === 'playing';
@@ -33,10 +34,11 @@ export function PlayerBar({ onToggle, onSeek, onPrevious, showVideo }: Props) {
   const bgUrl = bgRaw ? convertFileSrc(bgRaw) : null;
 
   const { videoTrack: playableVideo, markUnavailable } = useVideoTrack(currentTrack);
-  const videoTrack = showVideo ? playableVideo : null;
+  const videoTrack = showVisual ? playableVideo : null;
+  const visualizer = showVisual && showVisualizer && !!currentTrack && !currentTrack.videoPath;
   // En pause, les contrôles restent : c'est pour s'en servir qu'on s'arrête.
   const { hidden: controlsHidden, handlers: autoHide } =
-    useAutoHide(!!videoTrack && hideControlsOverVideo && status === 'playing');
+    useAutoHide((!!videoTrack || visualizer) && hideControlsOverVideo && status === 'playing');
 
   return (
     <div
@@ -57,6 +59,7 @@ export function PlayerBar({ onToggle, onSeek, onPrevious, showVideo }: Props) {
         />
       )}
       <div className="player-bg-overlay" />
+      {visualizer && <Visualizer variant="bars" className="player-visualizer" />}
 
       {/* Cover */}
       <div className="player-cover">
